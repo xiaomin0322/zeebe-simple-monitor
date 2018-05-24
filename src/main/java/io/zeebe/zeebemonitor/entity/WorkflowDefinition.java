@@ -19,7 +19,7 @@ import java.util.UUID;
 
 import javax.persistence.*;
 
-import io.zeebe.client.api.commands.Workflow;
+import io.zeebe.client.api.commands.WorkflowResource;
 
 @Entity
 public class WorkflowDefinition
@@ -31,7 +31,10 @@ public class WorkflowDefinition
     @Id
     private String uuid = UUID.randomUUID().toString();
 
-    private String key;
+    private long workflowKey;
+
+    private String bpmnProcessId;
+
     private int version;
 
     @OneToOne
@@ -46,13 +49,14 @@ public class WorkflowDefinition
     @Transient
     private long countEnded;
 
-    public static WorkflowDefinition from(Workflow event)
+    public static WorkflowDefinition from(WorkflowResource workflowResource)
     {
         final WorkflowDefinition dto = new WorkflowDefinition();
 
-        dto.setVersion(event.getVersion());
-        dto.setKey(event.getBpmnProcessId());
-        //dto.setResource(event.getBpmnXml());
+        dto.setWorkflowKey(workflowResource.getWorkflowKey());
+        dto.setVersion(workflowResource.getVersion());
+        dto.setBpmnProcessId(workflowResource.getBpmnProcessId());
+        dto.setResource(workflowResource.getBpmnXml());
 
         return dto;
     }
@@ -67,14 +71,14 @@ public class WorkflowDefinition
         this.resource = resource;
     }
 
-    public String getKey()
+    public String getBpmnProcessId()
     {
-        return key;
+        return bpmnProcessId;
     }
 
-    public void setKey(String key)
+    public void setBpmnProcessId(String bpmnProcessId)
     {
-        this.key = key;
+        this.bpmnProcessId = bpmnProcessId;
     }
 
     public int getVersion()
@@ -120,13 +124,23 @@ public class WorkflowDefinition
     @Override
     public String toString()
     {
-        return "WorkflowDefinitionDto [key=" + key + ", broker=" + broker + ", version=" + version + ", countRunning=" + countRunning +
+        return "WorkflowDefinitionDto [key=" + bpmnProcessId + ", broker=" + broker + ", version=" + version + ", countRunning=" + countRunning +
                 ", countEnded=" + countEnded + "]";
     }
 
     public String getUuid()
     {
         return uuid;
+    }
+
+    public long getWorkflowKey()
+    {
+        return workflowKey;
+    }
+
+    public void setWorkflowKey(long workflowKey)
+    {
+        this.workflowKey = workflowKey;
     }
 
 }

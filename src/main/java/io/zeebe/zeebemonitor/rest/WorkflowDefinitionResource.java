@@ -16,8 +16,13 @@
 package io.zeebe.zeebemonitor.rest;
 
 import java.io.UnsupportedEncodingException;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import io.zeebe.client.api.clients.WorkflowClient;
+import io.zeebe.client.api.commands.Workflow;
+import io.zeebe.client.api.commands.WorkflowResource;
+import io.zeebe.client.api.events.DeploymentEvent;
 import io.zeebe.zeebemonitor.entity.*;
 import io.zeebe.zeebemonitor.repository.WorkflowDefinitionRepository;
 import io.zeebe.zeebemonitor.repository.WorkflowInstanceRepository;
@@ -39,10 +44,42 @@ public class WorkflowDefinitionResource
     @Autowired
     private WorkflowInstanceRepository workflowInstanceRepository;
 
-    @RequestMapping(path = "/")
-    public Iterable<WorkflowDefinition> getWorkflowDefinitions()
+    @RequestMapping(path = "/{broker}")
+    public Iterable<WorkflowDefinition> getWorkflowDefinitions(@PathVariable("broker") String broker)
     {
-        return fillWorkflowInstanceCount(workflowDefinitionRepository.findAll());
+        final List<Workflow> deployedWorkflows = connections.getZeebeClient(broker)
+            .topicClient()
+            .workflowClient()
+            .newWorkflowRequest()
+            .send()
+            .join()
+            .getWorkflows();
+
+        final List<Long> deployedWorkflowKeys = deployedWorkflows.stream().map(Workflow::getWorkflowKey).collect(Collectors.toList());
+
+        final Iterable<WorkflowDefinition> availableWorkflowDefinitions = workflowDefinitionRepository.findAll();
+        for (WorkflowDefinition workflowDefinition : availableWorkflowDefinitions)
+        {
+            deployedWorkflowKeys.remove(workflowDefinition.getWorkflowKey());
+        }
+
+        if (deployedWorkflows.isEmpty())
+        {
+            // up-to-date
+            return fillWorkflowInstanceCount(availableWorkflowDefinitions);
+        }
+        else
+        {
+            // not up-to-date
+            final List<WorkflowDefinition> workflowDefinitions = fetchWorkflowsByKeyAndInsert(deployedWorkflowKeys, broker);
+
+            for (WorkflowDefinition def : availableWorkflowDefinitions)
+            {
+                workflowDefinitions.add(def);
+            }
+
+            return fillWorkflowInstanceCount(workflowDefinitions);
+        }
     }
 
     private Iterable<WorkflowDefinition> fillWorkflowInstanceCount(Iterable<WorkflowDefinition> workflowDefinitions)
@@ -56,8 +93,8 @@ public class WorkflowDefinitionResource
 
     private WorkflowDefinition fillWorkflowInstanceCount(WorkflowDefinition workflowDefinition)
     {
-        workflowDefinition.setCountRunning(workflowInstanceRepository.countRunningInstances(workflowDefinition.getKey(), workflowDefinition.getVersion()));
-        workflowDefinition.setCountEnded(workflowInstanceRepository.countEndedInstances(workflowDefinition.getKey(), workflowDefinition.getVersion()));
+        workflowDefinition.setCountRunning(workflowInstanceRepository.countRunningInstances(workflowDefinition.getBpmnProcessId(), workflowDefinition.getVersion()));
+        workflowDefinition.setCountEnded(workflowInstanceRepository.countEndedInstances(workflowDefinition.getBpmnProcessId(), workflowDefinition.getVersion()));
         return workflowDefinition;
     }
 
@@ -65,7 +102,20 @@ public class WorkflowDefinitionResource
     public WorkflowDefinition findWorkflowDefinition(@PathVariable("broker") String broker, @PathVariable("key") String key,
             @PathVariable("version") int version)
     {
-        return fillWorkflowInstanceCount(workflowDefinitionRepository.findByBrokerConnectionStringAndKeyAndVersion(broker, key, version));
+        final WorkflowDefinition def = workflowDefinitionRepository.findByBrokerConnectionStringAndKeyAndVersion(broker, key, version);
+
+        if (def != null)
+        {
+            return fillWorkflowInstanceCount(def);
+        }
+        else
+        {
+            // TODO request workflow by key
+            final long workflowKey = 123L;
+            final List<WorkflowDefinition> newDef = fetchWorkflowsByKeyAndInsert(Collections.singletonList(workflowKey), broker);
+
+            return newDef.get(0);
+        }
     }
 
     @RequestMapping(path = "/{broker}/{key}/{version}", method = RequestMethod.PUT)
@@ -90,14 +140,44 @@ public class WorkflowDefinitionResource
     {
         final WorkflowClient workflowClient = connections.getZeebeClient(deployment.getBroker()).topicClient().workflowClient();
 
+        final List<Long> workflowKeys = new ArrayList<>();
+
         for (FileDto file : deployment.getFiles())
         {
-            workflowClient //
+            final DeploymentEvent deploymentEvent = workflowClient //
                 .newDeployCommand()
                 .addResourceBytes(file.getContent(), file.getFilename())
                 .send()
                 .join();
+
+            final long workflowKey = deploymentEvent.getDeployedWorkflows().get(0).getWorkflowKey();
+            workflowKeys.add(workflowKey);
         }
+
+        final String broker = deployment.getBroker();
+
+        fetchWorkflowsByKeyAndInsert(workflowKeys, broker);
+    }
+
+    private List<WorkflowDefinition> fetchWorkflowsByKeyAndInsert(final List<Long> workflowKeys, final String broker)
+    {
+        return workflowKeys.stream().map(workflowKey ->
+        {
+            final WorkflowResource resource = connections
+                .getZeebeClient(broker)
+                .topicClient()
+                .workflowClient()
+                .newResourceRequest()
+                .workflowKey(workflowKey)
+                .send()
+                .join();
+
+            final WorkflowDefinition entity = WorkflowDefinition.from(resource);
+            workflowDefinitionRepository.save(entity);
+
+            return entity;
+        })
+        .collect(Collectors.toList());
     }
 
 }
