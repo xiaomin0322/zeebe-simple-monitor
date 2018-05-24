@@ -16,9 +16,10 @@
 package io.zeebe.zeebemonitor.entity;
 
 import java.util.UUID;
+
 import javax.persistence.*;
 
-import io.zeebe.client.event.WorkflowEvent;
+import io.zeebe.client.api.commands.Workflow;
 
 @Entity
 public class WorkflowDefinition
@@ -45,13 +46,13 @@ public class WorkflowDefinition
     @Transient
     private long countEnded;
 
-    public static WorkflowDefinition from(WorkflowEvent event)
+    public static WorkflowDefinition from(Workflow event)
     {
         final WorkflowDefinition dto = new WorkflowDefinition();
 
         dto.setVersion(event.getVersion());
         dto.setKey(event.getBpmnProcessId());
-        dto.setResource(event.getBpmnXml());
+        //dto.setResource(event.getBpmnXml());
 
         return dto;
     }

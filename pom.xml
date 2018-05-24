@@ -5,12 +5,12 @@
 	<parent>
 		<groupId>io.zeebe</groupId>
 		<artifactId>zb-parent</artifactId>
-		<version>0.6.0</version>
+		<version>0.7.0</version>
 		<relativePath />
 	</parent>
 
 	<artifactId>zeebe-simple-monitor</artifactId>
-	<version>0.5.0-SNAPSHOT</version>
+	<version>0.6.0-SNAPSHOT</version>
 
     <packaging>jar</packaging>
 
@@ -19,7 +19,7 @@
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
 
-		<zeebe.version>0.8.0</zeebe.version>
+		<zeebe.version>0.10.0-SNAPSHOT</zeebe.version>
 		<spring.boot.version>1.5.5.RELEASE</spring.boot.version>
 		<version.java>1.8</version.java>
 	</properties>

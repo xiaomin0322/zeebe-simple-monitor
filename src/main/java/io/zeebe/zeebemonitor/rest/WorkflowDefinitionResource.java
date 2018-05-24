@@ -17,15 +17,11 @@ package io.zeebe.zeebemonitor.rest;
 
 import java.io.UnsupportedEncodingException;
 
-import io.zeebe.zeebemonitor.Constants;
-import io.zeebe.zeebemonitor.entity.DeploymentDto;
-import io.zeebe.zeebemonitor.entity.FileDto;
-import io.zeebe.zeebemonitor.entity.WorkflowDefinition;
+import io.zeebe.client.api.clients.WorkflowClient;
+import io.zeebe.zeebemonitor.entity.*;
 import io.zeebe.zeebemonitor.repository.WorkflowDefinitionRepository;
 import io.zeebe.zeebemonitor.repository.WorkflowInstanceRepository;
 import io.zeebe.zeebemonitor.zeebe.ZeebeConnections;
-import io.zeebe.client.WorkflowsClient;
-import io.zeebe.client.event.ResourceType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -77,32 +73,30 @@ public class WorkflowDefinitionResource
             @RequestBody String payload)
     {
 
-        connections.getZeebeClient(brokerConnection).workflows() //
-                   .create(Constants.DEFAULT_TOPIC).bpmnProcessId(key).version(version).payload(payload).execute();
+        connections
+            .getZeebeClient(brokerConnection)
+            .topicClient()
+            .workflowClient()
+            .newCreateInstanceCommand()
+            .bpmnProcessId(key)
+            .version(version)
+            .payload(payload)
+            .send()
+            .join();
     }
 
     @RequestMapping(path = "/", method = RequestMethod.POST)
     public void uploadModel(@RequestBody DeploymentDto deployment) throws UnsupportedEncodingException
     {
-        final WorkflowsClient workflows = connections.getZeebeClient(deployment.getBroker()).workflows();
+        final WorkflowClient workflowClient = connections.getZeebeClient(deployment.getBroker()).topicClient().workflowClient();
+
         for (FileDto file : deployment.getFiles())
         {
-            workflows //
-                      .deploy(Constants.DEFAULT_TOPIC) //
-                      .addResourceBytes(file.getContent(), file.getFilename()).execute();
-        }
-    }
-
-    private ResourceType getResourceType(FileDto file)
-    {
-        final String fileName = file.getFilename().toLowerCase();
-        if (fileName.endsWith(".yaml") || fileName.endsWith(".yml"))
-        {
-            return ResourceType.YAML_WORKFLOW;
-        }
-        else
-        {
-            return ResourceType.BPMN_XML;
+            workflowClient //
+                .newDeployCommand()
+                .addResourceBytes(file.getContent(), file.getFilename())
+                .send()
+                .join();
         }
     }
 

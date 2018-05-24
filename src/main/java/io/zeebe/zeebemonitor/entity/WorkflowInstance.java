@@ -17,9 +17,10 @@ package io.zeebe.zeebemonitor.entity;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import javax.persistence.*;
 
-import io.zeebe.client.event.WorkflowInstanceEvent;
+import io.zeebe.client.api.events.WorkflowInstanceEvent;
 import org.hibernate.annotations.LazyCollection;
 import org.hibernate.annotations.LazyCollectionOption;
 

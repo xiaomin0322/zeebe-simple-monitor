@@ -15,36 +15,17 @@
  */
 package io.zeebe.zeebemonitor.zeebe;
 
-import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 
-import javax.json.Json;
-import javax.json.JsonObject;
-
+import io.zeebe.client.ZeebeClient;
+import io.zeebe.client.api.events.IncidentEvent;
+import io.zeebe.client.api.events.WorkflowInstanceEvent;
+import io.zeebe.zeebemonitor.Constants;
+import io.zeebe.zeebemonitor.entity.*;
+import io.zeebe.zeebemonitor.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.annotation.ApplicationScope;
-
-import io.zeebe.client.ClientProperties;
-import io.zeebe.client.ZeebeClient;
-import io.zeebe.client.event.IncidentEvent;
-import io.zeebe.client.event.WorkflowInstanceEvent;
-import io.zeebe.zeebemonitor.Constants;
-import io.zeebe.zeebemonitor.entity.Broker;
-import io.zeebe.zeebemonitor.entity.Incident;
-import io.zeebe.zeebemonitor.entity.LoggedEvent;
-import io.zeebe.zeebemonitor.entity.WorkflowDefinition;
-import io.zeebe.zeebemonitor.entity.WorkflowInstance;
-import io.zeebe.zeebemonitor.repository.BrokerRepository;
-import io.zeebe.zeebemonitor.repository.IncidentRepository;
-import io.zeebe.zeebemonitor.repository.LoggedEventRepository;
-import io.zeebe.zeebemonitor.repository.WorkflowDefinitionRepository;
-import io.zeebe.zeebemonitor.repository.WorkflowInstanceRepository;
 
 @Component
 @ApplicationScope
@@ -99,10 +80,10 @@ public class ZeebeConnections
 
     public ZeebeClient connect(final Broker broker)
     {
-        final Properties clientProperties = new Properties();
-        clientProperties.put(ClientProperties.BROKER_CONTACTPOINT, broker.getConnectionString());
-
-        final ZeebeClient client = ZeebeClient.create(clientProperties);
+        final ZeebeClient client = ZeebeClient
+                .newClientBuilder()
+                .brokerContactPoint(broker.getConnectionString())
+                .build();
 
         ensureThatDefaultTopicExist(broker, client);
 
@@ -113,91 +94,93 @@ public class ZeebeConnections
         final String typedSubscriptionName = clientName + "-typed";
         final String untypedSubscriptionName = clientName + "-untyped";
 
-        client.topics().newSubscription(Constants.DEFAULT_TOPIC) //
-              .startAtHeadOfTopic() //
-              .forcedStart() //
-              .name(typedSubscriptionName).incidentEventHandler((event) ->
+        client.topicClient()
+              .newSubscription()
+              .name(typedSubscriptionName)
+              .incidentEventHandler((event) ->
               {
-                  if ("CREATED".equals(event.getState()))
+                  switch (event.getState())
                   {
-                      workflowInstanceIncidentOccured(broker, event);
-                  }
-                  if ("RESOLVE_FAILED".equals(event.getState()))
-                  {
-                      workflowInstanceIncidentUpdated(broker, event);
-                  }
-                  if ("RESOLVED".equals(event.getState()) || "DELETED".equals(event.getState()))
-                  {
-                      workflowInstanceIncidentResolved(broker, event);
+                      case CREATED:
+                          workflowInstanceIncidentOccured(broker, event);
+                          break;
+
+                      case RESOLVE_FAILED:
+                          workflowInstanceIncidentUpdated(broker, event);
+                          break;
+
+                      case RESOLVED:
+                      case DELETED:
+                          workflowInstanceIncidentResolved(broker, event);
+                          break;
+
+                      default:
+                          break;
                   }
               })
               .workflowInstanceEventHandler((event) ->
               {
-                  // WorkflowInstanceState.XXX
-                  if ("WORKFLOW_INSTANCE_CREATED".equals(event.getState()))
+                  switch (event.getState())
                   {
-                      workflowInstanceStarted(broker, WorkflowInstance.from(event));
-                  }
-                  if ("WORKFLOW_INSTANCE_COMPLETED".equals(event.getState()))
-                  {
-                      workflowInstanceEnded(broker, event.getWorkflowInstanceKey());
-                  }
-                  if ("WORKFLOW_INSTANCE_CANCELED".equals(event.getState()))
-                  {
-                      workflowInstanceCanceled(broker, event.getWorkflowInstanceKey());
-                  }
-                  if ("ACTIVITY_READY".equals(event.getState()))
-                  {
-                      workflowInstanceUpdated(broker, event);
-                  }
-                  if ("ACTIVITY_ACTIVATED".equals(event.getState()))
-                  {
-                      workflowInstanceActivityStarted(broker, event);
-                  }
-                  if ("ACTIVITY_COMPLETING".equals(event.getState()))
-                  {
-                      workflowInstanceUpdated(broker, event);
-                  }
-                  if (ACTIVITY_END_STATES.contains(event.getState()))
-                  {
-                      workflowInstanceActivityEnded(broker, event);
-                  }
-                  if ("SEQUENCE_FLOW_TAKEN".equals(event.getState()))
-                  {
-                      sequenceFlowTaken(broker, event);
-                  }
-                  if ("PAYLOAD_UPDATED".equals(event.getState()))
-                  {
-                      workflowInstancePayloadUpdated(broker, event);
-                  }
-              })
-              .workflowEventHandler((event) ->
-              {
-                  // Feebdack: Expose constant in Client API
-                  // WorkflowState.CREATED
-                  if ("CREATED".equals(event.getState()))
-                  {
-                      workflowDefinitionDeployed(broker, WorkflowDefinition.from(event));
+                      case CREATED:
+                          workflowInstanceStarted(broker, WorkflowInstance.from(event));
+                          break;
+
+                      case COMPLETED:
+                          workflowInstanceEnded(broker, event.getWorkflowInstanceKey());
+                          break;
+
+                      case CANCELED:
+                          workflowInstanceCanceled(broker, event.getWorkflowInstanceKey());
+                          break;
+
+                      case ACTIVITY_ACTIVATED:
+                          workflowInstanceActivityStarted(broker, event);
+                          break;
+
+                      case ACTIVITY_READY:
+                      case ACTIVITY_COMPLETING:
+                          workflowInstanceUpdated(broker, event);
+                          break;
+
+                      case ACTIVITY_COMPLETED:
+                      case ACTIVITY_TERMINATED:
+                      case GATEWAY_ACTIVATED:
+                      case START_EVENT_OCCURRED:
+                      case END_EVENT_OCCURRED:
+                          workflowInstanceActivityEnded(broker, event);
+                          break;
+
+                      case SEQUENCE_FLOW_TAKEN:
+                          sequenceFlowTaken(broker, event);
+                          break;
+
+                      case PAYLOAD_UPDATED:
+                          workflowInstancePayloadUpdated(broker, event);
+                          break;
+
+                      default:
+                          break;
                   }
               })
+              .startAtHeadOfTopic()
+              .forcedStart()
               .open();
 
-        client.topics().newSubscription(Constants.DEFAULT_TOPIC).startAtHeadOfTopic().forcedStart().name(untypedSubscriptionName).handler((event) ->
+        client.topicClient().newSubscription().name(untypedSubscriptionName).recordHandler((record) ->
         {
-            final JsonObject jsonObject = Json.createReader(new StringReader(event.getJson())).readObject();
-
-            final String state = jsonObject.containsKey("state") ? jsonObject.getString("state") : "(none)";
-
             loggedEventRepository.save(new LoggedEvent(//
                     broker, //
-                    event.getMetadata().getPartitionId(), //
-                    event.getMetadata().getPosition(), //
-                    event.getMetadata().getKey(), //
-                    event.getMetadata().getType().toString(), //
-                    // event.getState(), // WAIT FOR
-                    // https://github.com/zeebe-io/zeebe/issues/367
-                    state, event.getJson()));
-        }).open();
+                    record.getMetadata().getPartitionId(), //
+                    record.getMetadata().getPosition(), //
+                    record.getMetadata().getKey(), //
+                    record.getMetadata().getValueType().name(), //
+                    record.getMetadata().getIntent(),
+                    record.toJson()));
+        })
+        .startAtHeadOfTopic()
+        .forcedStart()
+        .open();
 
         return client;
     }
@@ -205,9 +188,9 @@ public class ZeebeConnections
     private void ensureThatDefaultTopicExist(final Broker broker, final ZeebeClient client)
     {
         final boolean hasDefaultTopic = client
-                .topics()
-                .getTopics()
-                .execute()
+                .newTopicsRequest()
+                .send()
+                .join()
                 .getTopics()
                 .stream()
                 .anyMatch(t -> Constants.DEFAULT_TOPIC.equals(t.getName()));

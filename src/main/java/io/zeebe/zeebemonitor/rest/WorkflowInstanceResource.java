@@ -18,21 +18,15 @@ package io.zeebe.zeebemonitor.rest;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
-
 import io.zeebe.client.ZeebeClient;
-import io.zeebe.client.clustering.impl.BrokerPartitionState;
-import io.zeebe.client.event.TopicSubscription;
-import io.zeebe.client.event.WorkflowInstanceEvent;
+import io.zeebe.client.api.events.WorkflowInstanceEvent;
+import io.zeebe.client.api.subscription.TopicSubscription;
 import io.zeebe.zeebemonitor.Constants;
 import io.zeebe.zeebemonitor.entity.WorkflowInstance;
 import io.zeebe.zeebemonitor.repository.WorkflowInstanceRepository;
 import io.zeebe.zeebemonitor.zeebe.ZeebeConnections;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/workflow-instance")
@@ -62,8 +56,12 @@ public class WorkflowInstanceResource
 
             final WorkflowInstanceEvent event = findLastWorkflowInstanceEvent(workflowInstance, workflowInstanceKey);
 
-            client.workflows() //
-                  .cancel(event).execute();
+            client
+                .topicClient()
+                .workflowClient()
+                .newCancelInstanceCommand(event)
+                .send()
+                .join();
         }
     }
 
@@ -78,8 +76,13 @@ public class WorkflowInstanceResource
 
             final WorkflowInstanceEvent event = findLastWorkflowInstanceEvent(workflowInstance, workflowInstance.getLastEventPosition());
 
-            client.workflows() //
-                  .updatePayload(event).payload(payload).execute();
+            client
+                .topicClient()
+                .workflowClient()
+                .newUpdatePayloadCommand(event)
+                .payload(payload)
+                .send()
+                .join();
         }
     }
 
@@ -94,11 +97,9 @@ public class WorkflowInstanceResource
         {
             final int partitionId = getPartitionIdOfTopic(client, Constants.DEFAULT_TOPIC);
 
-            subscription = client.topics()
-                                 .newSubscription(Constants.DEFAULT_TOPIC)
+            subscription = client.topicClient()
+                                 .newSubscription()
                                  .name("wf-instance-lookup")
-                                 .forcedStart()
-                                 .startAtPosition(partitionId, position - 1)
                                  .workflowInstanceEventHandler(wfEvent ->
                                  {
                                      if (wfEvent.getMetadata().getPosition() == position)
@@ -106,6 +107,8 @@ public class WorkflowInstanceResource
                                          future.complete(wfEvent);
                                      }
                                  })
+                                 .startAtPosition(partitionId, position - 1)
+                                 .forcedStart()
                                  .open();
 
             return future.get(10, TimeUnit.SECONDS);
@@ -121,13 +124,15 @@ public class WorkflowInstanceResource
 
     private int getPartitionIdOfTopic(final ZeebeClient client, String topic)
     {
-        return client.requestTopology().execute()
-                .getBrokers()
+        return client
+                .newTopicsRequest()
+                .send()
+                .join()
+                .getTopics()
                 .stream()
-                .flatMap(b -> b.getPartitions().stream())
-                .filter(p -> p.getTopicName().equals(topic))
+                .filter(t -> t.getName().equals(topic))
                 .findFirst()
-                .map(BrokerPartitionState::getPartitionId)
+                .map(t -> t.getPartitions().get(0).getId())
                 .orElseThrow(() -> new RuntimeException("Doesn't find topic with name: " + topic));
     }
 
