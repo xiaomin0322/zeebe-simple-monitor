@@ -24,9 +24,6 @@ public class LoggedEvent
     @GeneratedValue
     private Long id;
 
-    @OneToOne
-    private Broker broker;
-
     @Column(length = 20000)
     private String eventPayload;
 
@@ -44,9 +41,8 @@ public class LoggedEvent
     {
     }
 
-    public LoggedEvent(Broker broker, int partitionId, long position, long key, String eventType, String state, String eventPayload)
+    public LoggedEvent(int partitionId, long position, long key, String eventType, String state, String eventPayload)
     {
-        this.broker = broker;
         this.partitionId = partitionId;
         this.position = position;
         this.key = key;
@@ -74,16 +70,6 @@ public class LoggedEvent
     public void setId(Long id)
     {
         this.id = id;
-    }
-
-    public Broker getBroker()
-    {
-        return broker;
-    }
-
-    public void setBroker(Broker broker)
-    {
-        this.broker = broker;
     }
 
     public String getEventPayload()

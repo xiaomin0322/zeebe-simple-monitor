@@ -20,18 +20,7 @@ import java.util.List;
 public class DeploymentDto
 {
 
-    private String broker;
     private List<FileDto> files;
-
-    public String getBroker()
-    {
-        return broker;
-    }
-
-    public void setBroker(String broker)
-    {
-        this.broker = broker;
-    }
 
     public List<FileDto> getFiles()
     {

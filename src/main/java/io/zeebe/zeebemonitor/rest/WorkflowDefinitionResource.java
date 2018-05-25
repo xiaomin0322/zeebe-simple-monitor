@@ -31,7 +31,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping(path = "/api/workflow-definition")
+@RequestMapping(path = "/api/workflow")
 public class WorkflowDefinitionResource
 {
 
@@ -44,10 +44,11 @@ public class WorkflowDefinitionResource
     @Autowired
     private WorkflowInstanceRepository workflowInstanceRepository;
 
-    @RequestMapping(path = "/{broker}")
-    public Iterable<WorkflowDefinition> getWorkflowDefinitions(@PathVariable("broker") String broker)
+    @RequestMapping("/")
+    public Iterable<WorkflowDefinition> getWorkflowDefinitions()
     {
-        final List<Workflow> deployedWorkflows = connections.getZeebeClient(broker)
+        final List<Workflow> deployedWorkflows = connections
+            .getClient()
             .topicClient()
             .workflowClient()
             .newWorkflowRequest()
@@ -71,7 +72,7 @@ public class WorkflowDefinitionResource
         else
         {
             // not up-to-date
-            final List<WorkflowDefinition> workflowDefinitions = fetchWorkflowsByKeyAndInsert(deployedWorkflowKeys, broker);
+            final List<WorkflowDefinition> workflowDefinitions = fetchWorkflowsByKeyAndInsert(deployedWorkflowKeys);
 
             for (WorkflowDefinition def : availableWorkflowDefinitions)
             {
@@ -93,16 +94,15 @@ public class WorkflowDefinitionResource
 
     private WorkflowDefinition fillWorkflowInstanceCount(WorkflowDefinition workflowDefinition)
     {
-        workflowDefinition.setCountRunning(workflowInstanceRepository.countRunningInstances(workflowDefinition.getBpmnProcessId(), workflowDefinition.getVersion()));
-        workflowDefinition.setCountEnded(workflowInstanceRepository.countEndedInstances(workflowDefinition.getBpmnProcessId(), workflowDefinition.getVersion()));
+        workflowDefinition.setCountRunning(workflowInstanceRepository.countRunningInstances(workflowDefinition.getWorkflowKey()));
+        workflowDefinition.setCountEnded(workflowInstanceRepository.countEndedInstances(workflowDefinition.getWorkflowKey()));
         return workflowDefinition;
     }
 
-    @RequestMapping(path = "/{broker}/{key}/{version}")
-    public WorkflowDefinition findWorkflowDefinition(@PathVariable("broker") String broker, @PathVariable("key") String key,
-            @PathVariable("version") int version)
+    @RequestMapping(path = "/{workflowKey}")
+    public WorkflowDefinition findWorkflowDefinition(@PathVariable("workflowKey") long workflowKey)
     {
-        final WorkflowDefinition def = workflowDefinitionRepository.findByBrokerConnectionStringAndKeyAndVersion(broker, key, version);
+        final WorkflowDefinition def = workflowDefinitionRepository.findOne(workflowKey);
 
         if (def != null)
         {
@@ -110,26 +110,22 @@ public class WorkflowDefinitionResource
         }
         else
         {
-            // TODO request workflow by key
-            final long workflowKey = 123L;
-            final List<WorkflowDefinition> newDef = fetchWorkflowsByKeyAndInsert(Collections.singletonList(workflowKey), broker);
+            final List<WorkflowDefinition> newDef = fetchWorkflowsByKeyAndInsert(Collections.singletonList(workflowKey));
 
             return newDef.get(0);
         }
     }
 
-    @RequestMapping(path = "/{broker}/{key}/{version}", method = RequestMethod.PUT)
-    public void startWorkflowInstance(@PathVariable("broker") String brokerConnection, @PathVariable("key") String key, @PathVariable("version") int version,
-            @RequestBody String payload)
+    @RequestMapping(path = "/{workflowKey}", method = RequestMethod.POST)
+    public void createWorkflowInstance(@PathVariable("workflowKey") long workflowKey, @RequestBody String payload)
     {
 
         connections
-            .getZeebeClient(brokerConnection)
+            .getClient()
             .topicClient()
             .workflowClient()
             .newCreateInstanceCommand()
-            .bpmnProcessId(key)
-            .version(version)
+            .workflowKey(workflowKey)
             .payload(payload)
             .send()
             .join();
@@ -138,7 +134,9 @@ public class WorkflowDefinitionResource
     @RequestMapping(path = "/", method = RequestMethod.POST)
     public void uploadModel(@RequestBody DeploymentDto deployment) throws UnsupportedEncodingException
     {
-        final WorkflowClient workflowClient = connections.getZeebeClient(deployment.getBroker()).topicClient().workflowClient();
+        final WorkflowClient workflowClient = connections.getClient()
+                .topicClient()
+                .workflowClient();
 
         final List<Long> workflowKeys = new ArrayList<>();
 
@@ -154,17 +152,15 @@ public class WorkflowDefinitionResource
             workflowKeys.add(workflowKey);
         }
 
-        final String broker = deployment.getBroker();
-
-        fetchWorkflowsByKeyAndInsert(workflowKeys, broker);
+        fetchWorkflowsByKeyAndInsert(workflowKeys);
     }
 
-    private List<WorkflowDefinition> fetchWorkflowsByKeyAndInsert(final List<Long> workflowKeys, final String broker)
+    private List<WorkflowDefinition> fetchWorkflowsByKeyAndInsert(final List<Long> workflowKeys)
     {
         return workflowKeys.stream().map(workflowKey ->
         {
             final WorkflowResource resource = connections
-                .getZeebeClient(broker)
+                .getClient()
                 .topicClient()
                 .workflowClient()
                 .newResourceRequest()

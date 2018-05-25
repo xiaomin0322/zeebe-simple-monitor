@@ -18,9 +18,7 @@ package io.zeebe.zeebemonitor.repository;
 import io.zeebe.zeebemonitor.entity.WorkflowDefinition;
 import org.springframework.data.repository.CrudRepository;
 
-public interface WorkflowDefinitionRepository extends CrudRepository<WorkflowDefinition, String>
+public interface WorkflowDefinitionRepository extends CrudRepository<WorkflowDefinition, Long>
 {
-
-    WorkflowDefinition findByBrokerConnectionStringAndKeyAndVersion(String brokerConnectionString, String key, int version);
 
 }

@@ -13,39 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.zeebe.zeebemonitor.zeebe;
+package io.zeebe.zeebemonitor.repository;
 
-import io.zeebe.zeebemonitor.entity.Broker;
+import io.zeebe.zeebemonitor.entity.Configuration;
+import org.springframework.data.repository.CrudRepository;
 
-public class ZeebeConnectionDto
+public interface ConfigurationRepository extends CrudRepository<Configuration, String>
 {
 
-    private Broker broker;
-    private boolean connected;
-
-    public ZeebeConnectionDto(Broker broker, boolean connected)
-    {
-        this.broker = broker;
-        this.connected = connected;
-    }
-
-    public Broker getBroker()
-    {
-        return broker;
-    }
-
-    public void setBroker(Broker broker)
-    {
-        this.broker = broker;
-    }
-
-    public boolean isConnected()
-    {
-        return connected;
-    }
-
-    public void setConnected(boolean connected)
-    {
-        this.connected = connected;
-    }
 }

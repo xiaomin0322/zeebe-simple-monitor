@@ -15,15 +15,19 @@
  */
 package io.zeebe.zeebemonitor.entity;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
+import java.util.UUID;
+
+import javax.persistence.*;
 
 @Entity
 public class Incident
 {
 
+    @GeneratedValue
     @Id
-    private long id;
+    private String id = UUID.randomUUID().toString();
+
+    private long incidentKey;
 
     private String activityId;
     private String errorType;
@@ -33,15 +37,15 @@ public class Incident
     {
     }
 
-    public Incident(long id, String activityId, String errorType, String errorMessage)
+    public Incident(long incidentKey, String activityId, String errorType, String errorMessage)
     {
-        this.id = id;
+        this.setIncidentKey(incidentKey);
         this.activityId = activityId;
         this.errorType = errorType;
         this.errorMessage = errorMessage;
     }
 
-    public long getId()
+    public String getId()
     {
         return id;
     }
@@ -78,36 +82,16 @@ public class Incident
         return this;
     }
 
-    @Override
-    public int hashCode()
+    public long getIncidentKey()
     {
-        final int prime = 31;
-        int result = 1;
-        result = prime * result + (int) (id ^ (id >>> 32));
-        return result;
+        return incidentKey;
     }
 
-    @Override
-    public boolean equals(Object obj)
+    public void setIncidentKey(long incidentKey)
     {
-        if (this == obj)
-        {
-            return true;
-        }
-        if (obj == null)
-        {
-            return false;
-        }
-        if (getClass() != obj.getClass())
-        {
-            return false;
-        }
-        final Incident other = (Incident) obj;
-        if (id != other.id)
-        {
-            return false;
-        }
-        return true;
+        this.incidentKey = incidentKey;
     }
+
+
 
 }

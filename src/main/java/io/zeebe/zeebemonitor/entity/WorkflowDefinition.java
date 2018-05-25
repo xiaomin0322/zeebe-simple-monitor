@@ -15,8 +15,6 @@
  */
 package io.zeebe.zeebemonitor.entity;
 
-import java.util.UUID;
-
 import javax.persistence.*;
 
 import io.zeebe.client.api.commands.WorkflowResource;
@@ -25,20 +23,14 @@ import io.zeebe.client.api.commands.WorkflowResource;
 public class WorkflowDefinition
 {
 
-    /**
-     * Generate random uuid for unique identification of workflow definition
-     */
     @Id
-    private String uuid = UUID.randomUUID().toString();
-
     private long workflowKey;
 
     private String bpmnProcessId;
 
     private int version;
 
-    @OneToOne
-    private Broker broker;
+    private String topic;
 
     @Column(length = 100000)
     private String resource;
@@ -57,6 +49,8 @@ public class WorkflowDefinition
         dto.setVersion(workflowResource.getVersion());
         dto.setBpmnProcessId(workflowResource.getBpmnProcessId());
         dto.setResource(workflowResource.getBpmnXml());
+
+        dto.setTopic("default-topic");
 
         return dto;
     }
@@ -91,16 +85,6 @@ public class WorkflowDefinition
         this.version = version;
     }
 
-    public Broker getBroker()
-    {
-        return broker;
-    }
-
-    public void setBroker(Broker broker)
-    {
-        this.broker = broker;
-    }
-
     public long getCountRunning()
     {
         return countRunning;
@@ -121,18 +105,6 @@ public class WorkflowDefinition
         this.countEnded = countEnded;
     }
 
-    @Override
-    public String toString()
-    {
-        return "WorkflowDefinitionDto [key=" + bpmnProcessId + ", broker=" + broker + ", version=" + version + ", countRunning=" + countRunning +
-                ", countEnded=" + countEnded + "]";
-    }
-
-    public String getUuid()
-    {
-        return uuid;
-    }
-
     public long getWorkflowKey()
     {
         return workflowKey;
@@ -141,6 +113,16 @@ public class WorkflowDefinition
     public void setWorkflowKey(long workflowKey)
     {
         this.workflowKey = workflowKey;
+    }
+
+    public String getTopic()
+    {
+        return topic;
+    }
+
+    public void setTopic(String topic)
+    {
+        this.topic = topic;
     }
 
 }

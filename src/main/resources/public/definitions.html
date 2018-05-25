@@ -63,7 +63,6 @@ em.optional:after {
                 <li class="active"><a href="./definitions.html">Workflow Definitions</a></li>
                 <li><a href="./instances.html">Workflow Instances</a></li>
                 <li><a href="./logs.html">Logs</a></li>
-                <li><a href="./search.html">Search</a></li>
             </ul>
         </nav>
 
@@ -80,10 +79,10 @@ em.optional:after {
 <div class="page-body container-fluid">
     <section class="page-section">
         <header>
-            <h1>Workflow Definitions</h1>
+            <h1>Workflows</h1>
 
             <p>
-                Inspect deployed BPMN workflow definitions within connected Zeebe brokers.
+                Inspect deployed BPMN workflows within connected Zeebe brokers.
             </p>
         </header>
 
@@ -117,11 +116,12 @@ em.optional:after {
                            style="font-size: x-small;"/>
                 </p></div>
                 <div><p>
-                    <select id="selectedBrokerDropdown" size="1">
+                    <select id="selectedTopicDropdown" size="1">
+                    	<option>default-topic</option>
                     </select>
                 </p></div>
                 <div><p>
-                    <a href="#" onclick="uploadModels()" class="btn btn-primary">Deploy new definition</a>
+                    <a href="#" onclick="uploadModels()" class="btn btn-primary">Deploy</a>
                     <!-- <span class="glyphicon glyphicon-cloud-upload" style="font-size: 5em;"> -->
                 </p></div>
 
@@ -137,16 +137,20 @@ em.optional:after {
                 <h2>Info</h2>
                 <table class="table table-striped">
                     <tr>
-                        <td>Name</td>
-                        <td id="workflowDefinitionName"></td>
+                        <td>BPMN process id</td>
+                        <td id="bpmnProcessId"></td>
                     </tr>
                     <tr>
                         <td>Key</td>
-                        <td id="workflowDefinitionKey"></td>
+                        <td id="workflowKey"></td>
                     </tr>
                     <tr>
                         <td>Version</td>
-                        <td id="workflowDefinitionVersion"></td>
+                        <td id="workflowVersion"></td>
+                    </tr>
+                    <tr>
+                        <td>Topic</td>
+                        <td id="topic"></td>
                     </tr>
                     <tr>
                         <td><b># running</b> instances</td>
@@ -155,10 +159,6 @@ em.optional:after {
                     <tr>
                         <td><b># ended</b> instances</td>
                         <td id="countEnded"></td>
-                    </tr>
-                    <tr>
-                        <td>Broker</td>
-                        <td id="workflowDefinitionBroker"></td>
                     </tr>
                 </table>
 

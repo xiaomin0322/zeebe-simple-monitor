@@ -15,12 +15,12 @@
  */
 package io.zeebe.zeebemonitor.entity;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 import javax.persistence.*;
 
 import io.zeebe.client.api.events.WorkflowInstanceEvent;
+import io.zeebe.client.api.record.RecordMetadata;
 import org.hibernate.annotations.LazyCollection;
 import org.hibernate.annotations.LazyCollectionOption;
 
@@ -28,15 +28,18 @@ import org.hibernate.annotations.LazyCollectionOption;
 public class WorkflowInstance
 {
 
+    @GeneratedValue
     @Id
-    private long id;
+    private String id = UUID.randomUUID().toString();
 
-    @OneToOne
-    private Broker broker;
-    private String workflowDefinitionUuid;
+    private int partitionId;
+    private String topicName;
 
-    private String workflowDefinitionKey;
-    private int workflowDefinitionVersion;
+    private long workflowInstanceKey;
+
+    private String bpmnProcessId;
+    private long workflowKey;
+    private int workflowVersion;
 
     private boolean ended = false;
 
@@ -63,15 +66,21 @@ public class WorkflowInstance
 
     public static WorkflowInstance from(WorkflowInstanceEvent workflowInstanceEvent)
     {
+        final RecordMetadata metadata = workflowInstanceEvent.getMetadata();
+
         final WorkflowInstance dto = new WorkflowInstance();
 
-        dto.setWorkflowDefinitionKey(workflowInstanceEvent.getBpmnProcessId());
-        dto.setWorkflowDefinitionVersion(workflowInstanceEvent.getVersion());
-        dto.setId(workflowInstanceEvent.getWorkflowInstanceKey());
+        dto.setPartitionId(metadata.getPartitionId());
+        dto.setTopicName(metadata.getTopicName());
 
+        dto.setBpmnProcessId(workflowInstanceEvent.getBpmnProcessId());
+        dto.setWorkflowVersion(workflowInstanceEvent.getVersion());
+        dto.setWorkflowKey(workflowInstanceEvent.getWorkflowKey());
+
+        dto.setWorkflowInstanceKey(workflowInstanceEvent.getWorkflowInstanceKey());
         dto.setPayload(workflowInstanceEvent.getPayload());
 
-        dto.setLastEventPosition(workflowInstanceEvent.getMetadata().getPosition());
+        dto.setLastEventPosition(metadata.getPosition());
 
         return dto;
     }
@@ -110,16 +119,6 @@ public class WorkflowInstance
         return this;
     }
 
-    public Broker getBroker()
-    {
-        return broker;
-    }
-
-    public void setBroker(Broker broker)
-    {
-        this.broker = broker;
-    }
-
     public String getPayload()
     {
         return payload;
@@ -134,14 +133,64 @@ public class WorkflowInstance
         return this;
     }
 
-    public long getId()
+    public String getId()
     {
         return id;
     }
 
-    public void setId(long id)
+    public void setId(String id)
     {
         this.id = id;
+    }
+
+    public int getPartitionId()
+    {
+        return partitionId;
+    }
+
+    public void setPartitionId(int partitionId)
+    {
+        this.partitionId = partitionId;
+    }
+
+    public String getTopicName()
+    {
+        return topicName;
+    }
+
+    public void setTopicName(String topicName)
+    {
+        this.topicName = topicName;
+    }
+
+    public long getWorkflowInstanceKey()
+    {
+        return workflowInstanceKey;
+    }
+
+    public void setWorkflowInstanceKey(long workflowInstanceKey)
+    {
+        this.workflowInstanceKey = workflowInstanceKey;
+    }
+
+    public String getBpmnProcessId()
+    {
+        return bpmnProcessId;
+    }
+
+    public void setBpmnProcessId(String bpmnProcessId)
+    {
+        this.bpmnProcessId = bpmnProcessId;
+    }
+
+    public long getWorkflownKey()
+    {
+        return workflowKey;
+    }
+
+    public void setWorkflownKey(long workflownKey)
+    {
+        this.workflowKey = workflownKey;
     }
 
     public List<String> getRunningActivities()
@@ -175,41 +224,24 @@ public class WorkflowInstance
         return this;
     }
 
-    public String getWorkflowDefinitionUuid()
+    public long getWorkflowKey()
     {
-        return workflowDefinitionUuid;
+        return workflowKey;
     }
 
-    public void setWorkflowDefinitionUuid(String workflowDefinitionUuid)
+    public void setWorkflowKey(long workflowKey)
     {
-        this.workflowDefinitionUuid = workflowDefinitionUuid;
+        this.workflowKey = workflowKey;
     }
 
-    @Override
-    public String toString()
+    public int getWorkflowVersion()
     {
-        return "WorkflowInstanceDto [broker=" + broker + ", id=" + id + ", workflowDefinitionUuid=" + workflowDefinitionUuid + ", ended=" + ended +
-                ", payload=" + payload + ", runningActivities=" + runningActivities + ", endedActivities=" + endedActivities + "]";
+        return workflowVersion;
     }
 
-    public String getWorkflowDefinitionKey()
+    public void setWorkflowVersion(int workflowVersion)
     {
-        return workflowDefinitionKey;
-    }
-
-    public void setWorkflowDefinitionKey(String workflowDefinitionKey)
-    {
-        this.workflowDefinitionKey = workflowDefinitionKey;
-    }
-
-    public int getWorkflowDefinitionVersion()
-    {
-        return workflowDefinitionVersion;
-    }
-
-    public void setWorkflowDefinitionVersion(int workflowDefinitionVersion)
-    {
-        this.workflowDefinitionVersion = workflowDefinitionVersion;
+        this.workflowVersion = workflowVersion;
     }
 
     public List<Incident> getIncidents()

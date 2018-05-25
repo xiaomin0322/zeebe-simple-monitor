@@ -12,10 +12,9 @@
     <!-- bpmn-js viewer -->
     <script type="text/javascript" src="webjars/bpmn-js/dist/bpmn-navigated-viewer.js"></script>
     <link type="text/css" rel="stylesheet" href="webjars/bpmn-js/dist/assets/diagram-js.css"/>
-    <link type="text/css" rel="stylesheet" href="webjars/bpmn-js/dist/assets/bpmn-font/css/bpmn-embedded.css
+    <link type="text/css" rel="stylesheet" href="webjars/bpmn-js/dist/assets/bpmn-font/css/bpmn-embedded.css"/>
 
-  <link type=" text
-    /css" rel="stylesheet" href="./css/modeler.css" />
+  	<link type="text/css" rel="stylesheet" href="./css/modeler.css" />
 
     <script type="text/javascript" src="./app.js"></script>
     <link rel="stylesheet" href="./app.css">
@@ -103,7 +102,6 @@ em.optional:after {
                 <li><a href="./definitions.html">Workflow Definitions</a></li>
                 <li class="active"><a href="./instances.html">Workflow Instances</a></li>
                 <li><a href="./logs.html">Logs</a></li>
-                <li><a href="./search.html">Search</a></li>
             </ul>
         </nav>
 
@@ -142,8 +140,8 @@ em.optional:after {
                 </h2>
                 <table id="workflowInstanceTable" class="table table-striped">
                     <thead>
-                    <th>Id</th>
-                    <th>Workflow</th>
+                    <th>workflow instance key</th>
+                    <th>BPMN process id</th>
                     </thead>
                     <tr>
                         <td class="tngp-table-selected"></td>
@@ -180,20 +178,16 @@ em.optional:after {
                 <h2>Info</h2>
                 <table class="table table-striped">
                     <tr>
-                        <td>Id</td>
-                        <td id="workflowInstanceId"></td>
+                        <td>workflow instance key</td>
+                        <td id="workflowInstanceKey"></td>
                     </tr>
                     <tr>
                         <td>State</td>
                         <td id="workflowRunning"></td>
                     </tr>
                     <tr>
-                        <td>Workflow Definition Uuid (temporary)</td>
-                        <td id="workflowDefinitionUuid"></td>
-                    </tr>
-                    <tr>
-                        <td>Workflow Definition Key</td>
-                        <td id="workflowDefinitionKey"></td>
+                        <td>Workflow Key</td>
+                        <td id="workflowKey"></td>
                     </tr>
                 </table>
                 <div>

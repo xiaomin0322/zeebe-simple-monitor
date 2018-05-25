@@ -15,7 +15,9 @@
  */
 package io.zeebe.zeebemonitor.zeebe;
 
-import java.util.*;
+import java.util.Iterator;
+
+import javax.annotation.PostConstruct;
 
 import io.zeebe.client.ZeebeClient;
 import io.zeebe.client.api.events.IncidentEvent;
@@ -31,21 +33,6 @@ import org.springframework.web.context.annotation.ApplicationScope;
 @ApplicationScope
 public class ZeebeConnections
 {
-
-    private static final Set<String> ACTIVITY_END_STATES;
-
-    static
-    {
-        ACTIVITY_END_STATES = new HashSet<>();
-        ACTIVITY_END_STATES.add("ACTIVITY_COMPLETED");
-        ACTIVITY_END_STATES.add("ACTIVITY_TERMINATED");
-
-        ACTIVITY_END_STATES.add("GATEWAY_ACTIVATED");
-
-        ACTIVITY_END_STATES.add("START_EVENT_OCCURRED");
-        ACTIVITY_END_STATES.add("END_EVENT_OCCURRED");
-    }
-
     @Autowired
     private WorkflowDefinitionRepository workflowDefinitionRepository;
     @Autowired
@@ -55,44 +42,67 @@ public class ZeebeConnections
     @Autowired
     private LoggedEventRepository loggedEventRepository;
     @Autowired
-    private BrokerRepository brokerRepository;
+    private ConfigurationRepository configurationRepository;
 
-    /**
-     * broker connectionString -> ZeebeClirnt
-     */
-    private Map<String, ZeebeClient> openConnections = new HashMap<>();
+    private ZeebeClient client;
 
-    public ArrayList<ZeebeConnectionDto> getConnectionDtoList()
+    @PostConstruct
+    public void initConnection()
     {
-        final Iterable<Broker> allBrokers = brokerRepository.findAll();
-        final ArrayList<ZeebeConnectionDto> result = new ArrayList<>();
-        for (Broker broker : allBrokers)
+        final Iterable<Configuration> configs = configurationRepository.findAll();
+        final Iterator<Configuration> configIterator = configs.iterator();
+        if (configIterator.hasNext())
         {
-            result.add(getConnectionDto(broker));
+            final Configuration conf = configIterator.next();
+
+            connect(conf);
         }
-        return result;
     }
 
-    public ZeebeConnectionDto getConnectionDto(Broker broker)
+    public boolean isConnected()
     {
-        return new ZeebeConnectionDto(broker, isConnected(broker));
+        if (client == null)
+        {
+            return false;
+        }
+        else
+        {
+            // send request to check if connected or not
+            try
+            {
+                client.newTopologyRequest()
+                    .send()
+                    .join();
+
+                return true;
+            }
+            catch (Exception e)
+            {
+                return false;
+            }
+        }
     }
 
-    public ZeebeClient connect(final Broker broker)
+    public boolean connect(final Configuration conf)
     {
-        final ZeebeClient client = ZeebeClient
+        this.client = ZeebeClient
                 .newClientBuilder()
-                .brokerContactPoint(broker.getConnectionString())
+                .brokerContactPoint(conf.getConnectionString())
                 .build();
 
-        ensureThatDefaultTopicExist(broker, client);
+        if (!isConnected())
+        {
+            return false;
+        }
 
-        openConnections.put(broker.getConnectionString(), client);
+        if (!hasDefaultTopicExist(client))
+        {
+            throw new RuntimeException(String.format("Missing required topic '%s' on broker '%s'", Constants.DEFAULT_TOPIC, conf.getConnectionString()));
+        }
 
-        // TODO: Think about the use case when connecting to various brokers on localhost
-        final String clientName = "zeebe-simple-monitor";
-        final String typedSubscriptionName = clientName + "-typed";
-        final String untypedSubscriptionName = clientName + "-untyped";
+        final String clientId = conf.getClientId();
+        final String typedSubscriptionName = clientId + "-1";
+        final String untypedSubscriptionName = clientId + "-2";
 
         client.topicClient()
               .newSubscription()
@@ -102,16 +112,16 @@ public class ZeebeConnections
                   switch (event.getState())
                   {
                       case CREATED:
-                          workflowInstanceIncidentOccured(broker, event);
+                          workflowInstanceIncidentOccured(event);
                           break;
 
                       case RESOLVE_FAILED:
-                          workflowInstanceIncidentUpdated(broker, event);
+                          workflowInstanceIncidentUpdated(event);
                           break;
 
                       case RESOLVED:
                       case DELETED:
-                          workflowInstanceIncidentResolved(broker, event);
+                          workflowInstanceIncidentResolved(event);
                           break;
 
                       default:
@@ -123,24 +133,24 @@ public class ZeebeConnections
                   switch (event.getState())
                   {
                       case CREATED:
-                          workflowInstanceStarted(broker, WorkflowInstance.from(event));
+                          workflowInstanceStarted(WorkflowInstance.from(event));
                           break;
 
                       case COMPLETED:
-                          workflowInstanceEnded(broker, event.getWorkflowInstanceKey());
+                          workflowInstanceEnded(event);
                           break;
 
                       case CANCELED:
-                          workflowInstanceCanceled(broker, event.getWorkflowInstanceKey());
+                          workflowInstanceCanceled(event);
                           break;
 
                       case ACTIVITY_ACTIVATED:
-                          workflowInstanceActivityStarted(broker, event);
+                          workflowInstanceActivityStarted(event);
                           break;
 
                       case ACTIVITY_READY:
                       case ACTIVITY_COMPLETING:
-                          workflowInstanceUpdated(broker, event);
+                          workflowInstanceUpdated(event);
                           break;
 
                       case ACTIVITY_COMPLETED:
@@ -148,15 +158,15 @@ public class ZeebeConnections
                       case GATEWAY_ACTIVATED:
                       case START_EVENT_OCCURRED:
                       case END_EVENT_OCCURRED:
-                          workflowInstanceActivityEnded(broker, event);
+                          workflowInstanceActivityEnded(event);
                           break;
 
                       case SEQUENCE_FLOW_TAKEN:
-                          sequenceFlowTaken(broker, event);
+                          sequenceFlowTaken(event);
                           break;
 
                       case PAYLOAD_UPDATED:
-                          workflowInstancePayloadUpdated(broker, event);
+                          workflowInstancePayloadUpdated(event);
                           break;
 
                       default:
@@ -170,7 +180,6 @@ public class ZeebeConnections
         client.topicClient().newSubscription().name(untypedSubscriptionName).recordHandler((record) ->
         {
             loggedEventRepository.save(new LoggedEvent(//
-                    broker, //
                     record.getMetadata().getPartitionId(), //
                     record.getMetadata().getPosition(), //
                     record.getMetadata().getKey(), //
@@ -179,93 +188,98 @@ public class ZeebeConnections
                     record.toJson()));
         })
         .startAtHeadOfTopic()
-        .forcedStart()
         .open();
 
-        return client;
+        return true;
     }
 
-    private void ensureThatDefaultTopicExist(final Broker broker, final ZeebeClient client)
+    private boolean hasDefaultTopicExist(final ZeebeClient client)
     {
-        final boolean hasDefaultTopic = client
+        return client
                 .newTopicsRequest()
                 .send()
                 .join()
                 .getTopics()
                 .stream()
                 .anyMatch(t -> Constants.DEFAULT_TOPIC.equals(t.getName()));
-
-        if (!hasDefaultTopic)
-        {
-            throw new RuntimeException(String.format("Missing required topic '%s' on broker '%s'", Constants.DEFAULT_TOPIC, broker.getConnectionString()));
-        }
     }
 
-    private void workflowDefinitionDeployed(Broker broker, WorkflowDefinition def)
+    private void workflowInstanceStarted(WorkflowInstance instance)
     {
-        def.setBroker(broker);
-        workflowDefinitionRepository.save(def);
-    }
-
-    private void workflowInstanceStarted(Broker broker, WorkflowInstance instance)
-    {
-        instance.setBroker(broker);
         workflowInstanceRepository.save(instance);
     }
 
-    private void workflowInstanceEnded(Broker broker, long workflowInstanceKey)
+    private void workflowInstanceEnded(WorkflowInstanceEvent event)
     {
-        workflowInstanceRepository.save(workflowInstanceRepository.findOne(workflowInstanceKey) //
-                                                                  .setEnded(true));
+        final WorkflowInstance instance = workflowInstanceRepository.findByWorkflowInstanceKeyAndPartitionId(event.getWorkflowInstanceKey(), event.getMetadata().getPartitionId());
+
+        instance.setEnded(true);
+
+        workflowInstanceRepository.save(instance);
     }
 
-    private void workflowInstanceActivityStarted(Broker broker, WorkflowInstanceEvent event)
+    private void workflowInstanceActivityStarted(WorkflowInstanceEvent event)
     {
-        workflowInstanceRepository.save(workflowInstanceRepository.findOne(event.getWorkflowInstanceKey()) //
-                                                                  .activityStarted(event.getActivityId(), event.getPayload())
-                                                                  .setLastEventPosition(event.getMetadata().getPosition()));
+        final WorkflowInstance instance = workflowInstanceRepository.findByWorkflowInstanceKeyAndPartitionId(event.getWorkflowInstanceKey(), event.getMetadata().getPartitionId());
+
+        instance.activityStarted(event.getActivityId(), event.getPayload())
+                .setLastEventPosition(event.getMetadata().getPosition());
+
+        workflowInstanceRepository.save(instance);
     }
 
-    private void workflowInstanceActivityEnded(Broker broker, WorkflowInstanceEvent event)
+    private void workflowInstanceActivityEnded(WorkflowInstanceEvent event)
     {
-        workflowInstanceRepository.save(//
-                workflowInstanceRepository.findOne(event.getWorkflowInstanceKey()) //
-                                          .activityEnded(event.getActivityId(), event.getPayload()).setLastEventPosition(event.getMetadata().getPosition()));
+        final WorkflowInstance instance = workflowInstanceRepository.findByWorkflowInstanceKeyAndPartitionId(event.getWorkflowInstanceKey(), event.getMetadata().getPartitionId());
+
+        instance.activityEnded(event.getActivityId(), event.getPayload())
+                .setLastEventPosition(event.getMetadata().getPosition());
+
+        workflowInstanceRepository.save(instance);
     }
 
-    private void workflowInstanceCanceled(Broker broker, long workflowInstanceKey)
+    private void workflowInstanceCanceled(WorkflowInstanceEvent event)
     {
-        workflowInstanceRepository.save(//
-                workflowInstanceRepository.findOne(workflowInstanceKey) //
-                                          .setEnded(true));
+        final WorkflowInstance instance = workflowInstanceRepository.findByWorkflowInstanceKeyAndPartitionId(event.getWorkflowInstanceKey(), event.getMetadata().getPartitionId());
+
+        instance.setEnded(true);
+
+        workflowInstanceRepository.save(instance);
     }
 
-    private void workflowInstancePayloadUpdated(Broker broker, WorkflowInstanceEvent event)
+    private void workflowInstancePayloadUpdated(WorkflowInstanceEvent event)
     {
-        workflowInstanceRepository.save(//
-                workflowInstanceRepository.findOne(event.getWorkflowInstanceKey()) //
-                                          .setPayload(event.getPayload()));
+        final WorkflowInstance instance = workflowInstanceRepository.findByWorkflowInstanceKeyAndPartitionId(event.getWorkflowInstanceKey(), event.getMetadata().getPartitionId());
+
+        instance.setPayload(event.getPayload());
+
+        workflowInstanceRepository.save(instance);
     }
 
-    private void workflowInstanceUpdated(Broker broker, WorkflowInstanceEvent event)
+    private void workflowInstanceUpdated(WorkflowInstanceEvent event)
     {
-        workflowInstanceRepository.save(//
-                workflowInstanceRepository.findOne(event.getWorkflowInstanceKey()) //
-                                          .setPayload(event.getPayload()).setLastEventPosition(event.getMetadata().getPosition()));
+        final WorkflowInstance instance = workflowInstanceRepository.findByWorkflowInstanceKeyAndPartitionId(event.getWorkflowInstanceKey(), event.getMetadata().getPartitionId());
+
+        instance.setPayload(event.getPayload())
+                .setLastEventPosition(event.getMetadata().getPosition());
+
+        workflowInstanceRepository.save(instance);
     }
 
-    private void workflowInstanceIncidentOccured(Broker broker, IncidentEvent event)
+    private void workflowInstanceIncidentOccured(IncidentEvent event)
     {
         final Incident incident = new Incident(event.getMetadata().getKey(), event.getActivityId(), event.getErrorType(), event.getErrorMessage());
 
         incidentRepository.save(incident);
 
-        workflowInstanceRepository.save(//
-                workflowInstanceRepository.findOne(event.getWorkflowInstanceKey()) //
-                                          .incidentOccured(incident));
+        final WorkflowInstance instance = workflowInstanceRepository.findByWorkflowInstanceKeyAndPartitionId(event.getWorkflowInstanceKey(), event.getMetadata().getPartitionId());
+
+        instance.incidentOccured(incident);
+
+        workflowInstanceRepository.save(instance);
     }
 
-    private void workflowInstanceIncidentUpdated(Broker broker, IncidentEvent event)
+    private void workflowInstanceIncidentUpdated(IncidentEvent event)
     {
         final Incident incident = incidentRepository.findOne(event.getMetadata().getKey());
 
@@ -276,60 +290,52 @@ public class ZeebeConnections
         }
     }
 
-    private void workflowInstanceIncidentResolved(Broker broker, IncidentEvent event)
+    private void workflowInstanceIncidentResolved(IncidentEvent event)
     {
         final Incident incident = incidentRepository.findOne(event.getMetadata().getKey());
 
-        workflowInstanceRepository.save(//
-                workflowInstanceRepository.findOne(event.getWorkflowInstanceKey()) //
-                                          .incidentResolved(incident));
+        final WorkflowInstance instance = workflowInstanceRepository.findByWorkflowInstanceKeyAndPartitionId(event.getWorkflowInstanceKey(), event.getMetadata().getPartitionId());
+
+        instance.incidentResolved(incident);
+
+        workflowInstanceRepository.save(instance);
 
         incidentRepository.delete(incident);
     }
 
-    private void sequenceFlowTaken(Broker broker, WorkflowInstanceEvent event)
+    private void sequenceFlowTaken(WorkflowInstanceEvent event)
     {
-        workflowInstanceRepository.save(//
-                workflowInstanceRepository.findOne(event.getWorkflowInstanceKey()) //
-                                          .sequenceFlowTaken(event.getActivityId()));
+        final WorkflowInstance instance = workflowInstanceRepository.findByWorkflowInstanceKeyAndPartitionId(event.getWorkflowInstanceKey(), event.getMetadata().getPartitionId());
+
+        instance.sequenceFlowTaken(event.getActivityId());
+
+        workflowInstanceRepository.save(instance);
     }
 
-    public void disconnect(Broker broker)
+    public ZeebeClient getClient()
     {
-        final ZeebeClient client = openConnections.get(broker.getConnectionString());
+        if (client != null)
+        {
+            return client;
+        }
+        else
+        {
+            throw new RuntimeException("Monitor is not connected");
+        }
+    }
 
+    public void disconnect()
+    {
         client.close();
-
-        openConnections.remove(broker.getConnectionString());
     }
 
     public void deleteAllData()
     {
-        for (ZeebeClient client : openConnections.values())
-        {
-            client.close();
-        }
-        openConnections = new HashMap<>();
-
         workflowInstanceRepository.deleteAll();
         workflowDefinitionRepository.deleteAll();
+        incidentRepository.deleteAll();
         loggedEventRepository.deleteAll();
-        brokerRepository.deleteAll();
-    }
-
-    public ZeebeClient getZeebeClient(String brokerConnectionString)
-    {
-        return openConnections.get(brokerConnectionString);
-    }
-
-    public ZeebeClient getZeebeClient(Broker broker)
-    {
-        return openConnections.get(broker.getConnectionString());
-    }
-
-    public boolean isConnected(Broker broker)
-    {
-        return openConnections.containsKey(broker.getConnectionString());
+        configurationRepository.deleteAll();
     }
 
 }

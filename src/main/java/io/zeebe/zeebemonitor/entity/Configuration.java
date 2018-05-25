@@ -15,29 +15,36 @@
  */
 package io.zeebe.zeebemonitor.entity;
 
-import javax.persistence.Entity;
-import javax.persistence.Id;
+import java.util.UUID;
+
+import javax.persistence.*;
 
 @Entity
-public class Broker
+public class Configuration
 {
-
-    //  @GeneratedValue
-    //  private String id; // = UUID.randomUUID().toString()
-
     @Id
-    private String connectionString;
-    private String name;
+    @GeneratedValue
+    private String clientId = "zsm-" + UUID.randomUUID().getMostSignificantBits();
 
-    public Broker()
+    private String connectionString;
+
+    public Configuration()
     {
     }
 
-    public Broker(String name, String connectionString)
+    public Configuration(String connectionString)
     {
-        super();
-        this.name = name;
         this.connectionString = connectionString;
+    }
+
+    public String getClientId()
+    {
+        return clientId;
+    }
+
+    public void setClientId(String clientId)
+    {
+        this.clientId = clientId;
     }
 
     public String getConnectionString()
@@ -45,9 +52,9 @@ public class Broker
         return connectionString;
     }
 
-    public String getName()
+    public void setConnectionString(String connectionString)
     {
-        return name;
+        this.connectionString = connectionString;
     }
 
 }
