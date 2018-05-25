@@ -13,12 +13,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.zeebe.zeebemonitor.repository;
+package io.zeebe.zeebemonitor.entity;
 
-import io.zeebe.zeebemonitor.entity.LoggedEvent;
-import org.springframework.data.repository.CrudRepository;
+import javax.persistence.*;
 
-public interface LoggedEventRepository extends CrudRepository<LoggedEvent, Long>
+@Entity
+public class RecordLog
 {
+    @Id
+    @GeneratedValue
+    private Long id;
+
+    @Column(length = 20000)
+    private String content;
+
+    public RecordLog()
+    {
+    }
+
+    public RecordLog(String content)
+    {
+        this.setContent(content);
+    }
+
+    public String getContent()
+    {
+        return content;
+    }
+
+    public void setContent(String content)
+    {
+        this.content = content;
+    }
+
+
 
 }

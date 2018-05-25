@@ -13,28 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.zeebe.zeebemonitor.rest;
+package io.zeebe.zeebemonitor.repository;
 
 import io.zeebe.zeebemonitor.entity.RecordLog;
-import io.zeebe.zeebemonitor.repository.RecordLogRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.data.repository.CrudRepository;
 
-@Component
-@RestController
-@RequestMapping("/api/log")
-public class RecordLogResource
+public interface RecordLogRepository extends CrudRepository<RecordLog, Long>
 {
-
-    @Autowired
-    private RecordLogRepository loggedEventRepository;
-
-    @RequestMapping("/")
-    public Iterable<RecordLog> getLogs()
-    {
-        return loggedEventRepository.findAll();
-    }
 
 }

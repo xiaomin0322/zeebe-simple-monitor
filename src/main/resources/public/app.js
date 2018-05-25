@@ -142,14 +142,6 @@ function renderConnectionState(connected) {
 	}
 }
 
-//-------- log page
-
-function loadBrokerLogs() {
-	$.get(restAccess + 'log/', function(logs) {
-		brokerLogs = logs;
-		renderBrokerLogsTable();
-	});
-}
 
 //-------- workflow page
 
@@ -330,29 +322,32 @@ function renderIncidentsTable() {
 	}
 }
 
+//-------- log page
+
+function loadBrokerLogs() {
+	$.get(restAccess + 'log/', function(logs) {
+		brokerLogs = logs;
+		renderBrokerLogsTable();
+	});
+}
+
 function renderBrokerLogsTable() {
 	$("#brokerLogsTable > tbody").html("");
 
 			for (index = brokerLogs.length-1; index >= 0; --index) {
 
-				var loggedEvent = brokerLogs[index];
-                var payload = JSON.parse(loggedEvent.payload);
+				var log = brokerLogs[index];
+				var record = log.content
+                var json = JSON.parse(record);
+				var jsonString = JSON.stringify(json, null, 4)
                 
+				console.log(jsonString)
+				
 				$('#brokerLogsTable tbody').append(
-					"<tr><td>"+loggedEvent.broker.connectionString+"</td>"
-					+"<td>"+loggedEvent.eventType+"</td>"
-					+"<td>"+loggedEvent.state+"</td>"
-					+"<td>"+loggedEvent.partitionId+"</td>"
-					+"<td>"+loggedEvent.position+"</td>"
-					+"<td>"+loggedEvent.key+"</td>"
-					+"<td>"
-			        + '<a label="Details" data-toggle="collapse" data-target="#payload'+index+'" class="btn btn-default table-row-btn"><span class="glyphicon glyphicon-eye-open"></span></a>'
-			        +"<div class=\"collapse\" id=\"payload"+ index + "\"><pre>"+JSON.stringify(payload, null, 2)+"</pre></div></td></tr>");
-
+					"<tr><td><p style='white-space:pre'>"+jsonString+"</p></td>"
+					+"</td></tr>");
 			}
 }
-
-
 
 
 

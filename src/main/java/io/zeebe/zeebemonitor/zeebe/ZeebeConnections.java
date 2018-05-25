@@ -40,7 +40,7 @@ public class ZeebeConnections
     @Autowired
     private IncidentRepository incidentRepository;
     @Autowired
-    private LoggedEventRepository loggedEventRepository;
+    private RecordLogRepository loggedEventRepository;
     @Autowired
     private ConfigurationRepository configurationRepository;
 
@@ -179,13 +179,7 @@ public class ZeebeConnections
 
         client.topicClient().newSubscription().name(untypedSubscriptionName).recordHandler((record) ->
         {
-            loggedEventRepository.save(new LoggedEvent(//
-                    record.getMetadata().getPartitionId(), //
-                    record.getMetadata().getPosition(), //
-                    record.getMetadata().getKey(), //
-                    record.getMetadata().getValueType().name(), //
-                    record.getMetadata().getIntent(),
-                    record.toJson()));
+            loggedEventRepository.save(new RecordLog(record.toJson()));
         })
         .startAtHeadOfTopic()
         .open();
