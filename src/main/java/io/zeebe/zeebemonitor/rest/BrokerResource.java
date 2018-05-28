@@ -17,9 +17,9 @@ package io.zeebe.zeebemonitor.rest;
 
 import java.util.Iterator;
 
-import io.zeebe.zeebemonitor.entity.Configuration;
+import io.zeebe.zeebemonitor.entity.ConfigurationEntity;
 import io.zeebe.zeebemonitor.repository.ConfigurationRepository;
-import io.zeebe.zeebemonitor.zeebe.ZeebeConnections;
+import io.zeebe.zeebemonitor.zeebe.ZeebeConnectionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.*;
@@ -34,20 +34,20 @@ public class BrokerResource
     private ConfigurationRepository configurationRepository;
 
     @Autowired
-    private ZeebeConnections zeebeConnections;
+    private ZeebeConnectionService zeebeConnections;
 
 
 
     @RequestMapping("/")
-    public Configuration getConfiguration()
+    public ConfigurationEntity getConfiguration()
     {
         return getConfig();
     }
 
-    private Configuration getConfig()
+    private ConfigurationEntity getConfig()
     {
-        final Iterable<Configuration> configs = configurationRepository.findAll();
-        final Iterator<Configuration> configIterator = configs.iterator();
+        final Iterable<ConfigurationEntity> configs = configurationRepository.findAll();
+        final Iterator<ConfigurationEntity> configIterator = configs.iterator();
 
         if (configIterator.hasNext())
         {
@@ -60,9 +60,9 @@ public class BrokerResource
     }
 
     @RequestMapping(path = "/connect", method = RequestMethod.POST)
-    public Configuration connect(@RequestBody String connectionString)
+    public ConfigurationEntity connect(@RequestBody String connectionString)
     {
-        final Configuration config = getConfig();
+        final ConfigurationEntity config = getConfig();
 
         if (config != null)
         {
@@ -70,7 +70,7 @@ public class BrokerResource
         }
         else
         {
-            final Configuration newConfig = new Configuration(connectionString);
+            final ConfigurationEntity newConfig = new ConfigurationEntity(connectionString);
             configurationRepository.save(newConfig);
 
             zeebeConnections.connect(newConfig);

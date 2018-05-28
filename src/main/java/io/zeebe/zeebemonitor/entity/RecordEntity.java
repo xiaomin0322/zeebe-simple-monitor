@@ -18,7 +18,7 @@ package io.zeebe.zeebemonitor.entity;
 import javax.persistence.*;
 
 @Entity
-public class RecordLog
+public class RecordEntity
 {
     @Id
     @GeneratedValue
@@ -30,10 +30,10 @@ public class RecordLog
     @Column(length = 20000)
     private String content;
 
-    public RecordLog()
+    public RecordEntity()
     { }
 
-    public RecordLog(int partitionId, long position, String content)
+    public RecordEntity(int partitionId, long position, String content)
     {
         this.partitionId = partitionId;
         this.position = position;

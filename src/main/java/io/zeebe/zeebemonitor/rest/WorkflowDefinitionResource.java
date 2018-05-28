@@ -26,7 +26,7 @@ import io.zeebe.client.api.events.DeploymentEvent;
 import io.zeebe.zeebemonitor.entity.*;
 import io.zeebe.zeebemonitor.repository.WorkflowDefinitionRepository;
 import io.zeebe.zeebemonitor.repository.WorkflowInstanceRepository;
-import io.zeebe.zeebemonitor.zeebe.ZeebeConnections;
+import io.zeebe.zeebemonitor.zeebe.ZeebeConnectionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -36,7 +36,7 @@ public class WorkflowDefinitionResource
 {
 
     @Autowired
-    private ZeebeConnections connections;
+    private ZeebeConnectionService connections;
 
     @Autowired
     private WorkflowDefinitionRepository workflowDefinitionRepository;
@@ -45,7 +45,7 @@ public class WorkflowDefinitionResource
     private WorkflowInstanceRepository workflowInstanceRepository;
 
     @RequestMapping("/")
-    public Iterable<WorkflowDefinition> getWorkflowDefinitions()
+    public Iterable<WorkflowEntity> getWorkflowDefinitions()
     {
         final List<Workflow> deployedWorkflows = connections
             .getClient()
@@ -58,8 +58,8 @@ public class WorkflowDefinitionResource
 
         final List<Long> deployedWorkflowKeys = deployedWorkflows.stream().map(Workflow::getWorkflowKey).collect(Collectors.toList());
 
-        final Iterable<WorkflowDefinition> availableWorkflowDefinitions = workflowDefinitionRepository.findAll();
-        for (WorkflowDefinition workflowDefinition : availableWorkflowDefinitions)
+        final Iterable<WorkflowEntity> availableWorkflowDefinitions = workflowDefinitionRepository.findAll();
+        for (WorkflowEntity workflowDefinition : availableWorkflowDefinitions)
         {
             deployedWorkflowKeys.remove(workflowDefinition.getWorkflowKey());
         }
@@ -72,9 +72,9 @@ public class WorkflowDefinitionResource
         else
         {
             // not up-to-date
-            final List<WorkflowDefinition> workflowDefinitions = fetchWorkflowsByKeyAndInsert(deployedWorkflowKeys);
+            final List<WorkflowEntity> workflowDefinitions = fetchWorkflowsByKeyAndInsert(deployedWorkflowKeys);
 
-            for (WorkflowDefinition def : availableWorkflowDefinitions)
+            for (WorkflowEntity def : availableWorkflowDefinitions)
             {
                 workflowDefinitions.add(def);
             }
@@ -83,16 +83,16 @@ public class WorkflowDefinitionResource
         }
     }
 
-    private Iterable<WorkflowDefinition> fillWorkflowInstanceCount(Iterable<WorkflowDefinition> workflowDefinitions)
+    private Iterable<WorkflowEntity> fillWorkflowInstanceCount(Iterable<WorkflowEntity> workflowDefinitions)
     {
-        for (WorkflowDefinition workflowDefinition : workflowDefinitions)
+        for (WorkflowEntity workflowDefinition : workflowDefinitions)
         {
             fillWorkflowInstanceCount(workflowDefinition);
         }
         return workflowDefinitions;
     }
 
-    private WorkflowDefinition fillWorkflowInstanceCount(WorkflowDefinition workflowDefinition)
+    private WorkflowEntity fillWorkflowInstanceCount(WorkflowEntity workflowDefinition)
     {
         workflowDefinition.setCountRunning(workflowInstanceRepository.countRunningInstances(workflowDefinition.getWorkflowKey()));
         workflowDefinition.setCountEnded(workflowInstanceRepository.countEndedInstances(workflowDefinition.getWorkflowKey()));
@@ -100,9 +100,9 @@ public class WorkflowDefinitionResource
     }
 
     @RequestMapping(path = "/{workflowKey}")
-    public WorkflowDefinition findWorkflowDefinition(@PathVariable("workflowKey") long workflowKey)
+    public WorkflowEntity findWorkflowDefinition(@PathVariable("workflowKey") long workflowKey)
     {
-        final WorkflowDefinition def = workflowDefinitionRepository.findOne(workflowKey);
+        final WorkflowEntity def = workflowDefinitionRepository.findOne(workflowKey);
 
         if (def != null)
         {
@@ -110,7 +110,7 @@ public class WorkflowDefinitionResource
         }
         else
         {
-            final List<WorkflowDefinition> newDef = fetchWorkflowsByKeyAndInsert(Collections.singletonList(workflowKey));
+            final List<WorkflowEntity> newDef = fetchWorkflowsByKeyAndInsert(Collections.singletonList(workflowKey));
 
             return newDef.get(0);
         }
@@ -155,7 +155,7 @@ public class WorkflowDefinitionResource
         fetchWorkflowsByKeyAndInsert(workflowKeys);
     }
 
-    private List<WorkflowDefinition> fetchWorkflowsByKeyAndInsert(final List<Long> workflowKeys)
+    private List<WorkflowEntity> fetchWorkflowsByKeyAndInsert(final List<Long> workflowKeys)
     {
         return workflowKeys.stream().map(workflowKey ->
         {
@@ -168,7 +168,7 @@ public class WorkflowDefinitionResource
                 .send()
                 .join();
 
-            final WorkflowDefinition entity = WorkflowDefinition.from(resource);
+            final WorkflowEntity entity = WorkflowEntity.from(resource);
             workflowDefinitionRepository.save(entity);
 
             return entity;

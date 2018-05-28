@@ -13,23 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.zeebe.zeebemonitor.entity;
+package io.zeebe.zeebemonitor.repository;
 
-import java.util.List;
+import java.util.Optional;
 
-public class DeploymentDto
+import io.zeebe.zeebemonitor.entity.ConfigurationEntity;
+
+public interface ConfigurationRepositoryCustom
 {
-
-    private List<FileDto> files;
-
-    public List<FileDto> getFiles()
-    {
-        return files;
-    }
-
-    public void setFiles(List<FileDto> files)
-    {
-        this.files = files;
-    }
-
+    Optional<ConfigurationEntity> getConfiguration();
 }

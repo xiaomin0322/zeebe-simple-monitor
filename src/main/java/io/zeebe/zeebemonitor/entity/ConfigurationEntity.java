@@ -20,19 +20,21 @@ import java.util.UUID;
 import javax.persistence.*;
 
 @Entity
-public class Configuration
+public class ConfigurationEntity
 {
     @Id
     @GeneratedValue
-    private String clientId = String.valueOf(UUID.randomUUID().getMostSignificantBits());
+    private String clientId = UUID.randomUUID().toString();
 
     private String connectionString;
 
-    public Configuration()
+    private String subscriptionName;
+
+    public ConfigurationEntity()
     {
     }
 
-    public Configuration(String connectionString)
+    public ConfigurationEntity(String connectionString)
     {
         this.connectionString = connectionString;
     }
@@ -55,6 +57,16 @@ public class Configuration
     public void setConnectionString(String connectionString)
     {
         this.connectionString = connectionString;
+    }
+
+    public String getSubscriptionName()
+    {
+        return subscriptionName;
+    }
+
+    public void setSubscriptionName(String subscriptionName)
+    {
+        this.subscriptionName = subscriptionName;
     }
 
 }

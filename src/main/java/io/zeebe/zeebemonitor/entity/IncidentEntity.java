@@ -20,7 +20,7 @@ import java.util.UUID;
 import javax.persistence.*;
 
 @Entity
-public class Incident
+public class IncidentEntity
 {
 
     @GeneratedValue
@@ -33,11 +33,11 @@ public class Incident
     private String errorType;
     private String errorMessage;
 
-    public Incident()
+    public IncidentEntity()
     {
     }
 
-    public Incident(long incidentKey, String activityId, String errorType, String errorMessage)
+    public IncidentEntity(long incidentKey, String activityId, String errorType, String errorMessage)
     {
         this.setIncidentKey(incidentKey);
         this.activityId = activityId;
@@ -65,7 +65,7 @@ public class Incident
         return errorType;
     }
 
-    public Incident setErrorType(String errorType)
+    public IncidentEntity setErrorType(String errorType)
     {
         this.errorType = errorType;
         return this;
@@ -76,7 +76,7 @@ public class Incident
         return errorMessage;
     }
 
-    public Incident setErrorMessage(String errorMessage)
+    public IncidentEntity setErrorMessage(String errorMessage)
     {
         this.errorMessage = errorMessage;
         return this;

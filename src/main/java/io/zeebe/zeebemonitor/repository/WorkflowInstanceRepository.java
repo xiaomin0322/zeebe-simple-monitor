@@ -15,11 +15,11 @@
  */
 package io.zeebe.zeebemonitor.repository;
 
-import io.zeebe.zeebemonitor.entity.WorkflowInstance;
+import io.zeebe.zeebemonitor.entity.WorkflowInstanceEntity;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 
-public interface WorkflowInstanceRepository extends CrudRepository<WorkflowInstance, String>
+public interface WorkflowInstanceRepository extends CrudRepository<WorkflowInstanceEntity, String>
 {
     @Query("SELECT COUNT(wf) FROM WorkflowInstance wf WHERE wf.workflowKey=?1 and wf.ended=false")
     long countRunningInstances(long workfloKey);
@@ -27,6 +27,6 @@ public interface WorkflowInstanceRepository extends CrudRepository<WorkflowInsta
     @Query("SELECT COUNT(wf) FROM WorkflowInstance wf WHERE wf.workflowKey=?1 and wf.ended=true")
     long countEndedInstances(long workflowKey);
 
-    WorkflowInstance findByWorkflowInstanceKeyAndPartitionId(long workflowInstanceKeys, int partitionId);
+    WorkflowInstanceEntity findByWorkflowInstanceKeyAndPartitionId(long workflowInstanceKeys, int partitionId);
 
 }

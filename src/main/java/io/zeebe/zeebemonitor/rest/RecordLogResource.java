@@ -15,8 +15,8 @@
  */
 package io.zeebe.zeebemonitor.rest;
 
-import io.zeebe.zeebemonitor.entity.RecordLog;
-import io.zeebe.zeebemonitor.repository.RecordLogRepository;
+import io.zeebe.zeebemonitor.entity.RecordEntity;
+import io.zeebe.zeebemonitor.repository.RecordRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -29,10 +29,10 @@ public class RecordLogResource
 {
 
     @Autowired
-    private RecordLogRepository loggedEventRepository;
+    private RecordRepository loggedEventRepository;
 
     @RequestMapping("/")
-    public Iterable<RecordLog> getLogs()
+    public Iterable<RecordEntity> getLogs()
     {
         return loggedEventRepository.findAll();
     }

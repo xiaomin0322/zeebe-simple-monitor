@@ -13,18 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.zeebe.zeebemonitor;
+package io.zeebe.zeebemonitor.rest;
 
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
+import java.util.List;
 
-@SpringBootApplication
-public class Application
+public class DeploymentDto
 {
 
-    public static void main(String... args)
+    private List<FileDto> files;
+
+    public List<FileDto> getFiles()
     {
-        SpringApplication.run(Application.class, args);
+        return files;
+    }
+
+    public void setFiles(List<FileDto> files)
+    {
+        this.files = files;
     }
 
 }

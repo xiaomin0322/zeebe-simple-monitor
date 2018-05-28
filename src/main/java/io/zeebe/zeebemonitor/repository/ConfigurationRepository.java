@@ -15,10 +15,10 @@
  */
 package io.zeebe.zeebemonitor.repository;
 
-import io.zeebe.zeebemonitor.entity.Configuration;
+import io.zeebe.zeebemonitor.entity.ConfigurationEntity;
 import org.springframework.data.repository.CrudRepository;
 
-public interface ConfigurationRepository extends CrudRepository<Configuration, String>
+public interface ConfigurationRepository extends CrudRepository<ConfigurationEntity, String>, ConfigurationRepositoryCustom
 {
 
 }

@@ -25,7 +25,7 @@ import org.hibernate.annotations.LazyCollection;
 import org.hibernate.annotations.LazyCollectionOption;
 
 @Entity
-public class WorkflowInstance
+public class WorkflowInstanceEntity
 {
 
     @GeneratedValue
@@ -62,13 +62,13 @@ public class WorkflowInstance
 
     @LazyCollection(LazyCollectionOption.FALSE)
     @OneToMany(cascade = CascadeType.ALL)
-    private List<Incident> incidents = new ArrayList<>();
+    private List<IncidentEntity> incidents = new ArrayList<>();
 
-    public static WorkflowInstance from(WorkflowInstanceEvent workflowInstanceEvent)
+    public static WorkflowInstanceEntity from(WorkflowInstanceEvent workflowInstanceEvent)
     {
         final RecordMetadata metadata = workflowInstanceEvent.getMetadata();
 
-        final WorkflowInstance dto = new WorkflowInstance();
+        final WorkflowInstanceEntity dto = new WorkflowInstanceEntity();
 
         dto.setPartitionId(metadata.getPartitionId());
         dto.setTopicName(metadata.getTopicName());
@@ -85,7 +85,7 @@ public class WorkflowInstance
         return dto;
     }
 
-    public WorkflowInstance activityStarted(String activityId, String newPayload)
+    public WorkflowInstanceEntity activityStarted(String activityId, String newPayload)
     {
         // TODO: Add own activity entity to also allow for loops & co
         runningActivities.add(activityId);
@@ -93,7 +93,7 @@ public class WorkflowInstance
         return this;
     }
 
-    public WorkflowInstance activityEnded(String activityId, String newPayload)
+    public WorkflowInstanceEntity activityEnded(String activityId, String newPayload)
     {
         runningActivities.remove(activityId);
         endedActivities.add(activityId);
@@ -101,19 +101,19 @@ public class WorkflowInstance
         return this;
     }
 
-    public WorkflowInstance sequenceFlowTaken(String activityId)
+    public WorkflowInstanceEntity sequenceFlowTaken(String activityId)
     {
         takenSequenceFlows.add(activityId);
         return this;
     }
 
-    public WorkflowInstance incidentOccured(Incident incident)
+    public WorkflowInstanceEntity incidentOccured(IncidentEntity incident)
     {
         this.incidents.add(incident);
         return this;
     }
 
-    public WorkflowInstance incidentResolved(Incident incident)
+    public WorkflowInstanceEntity incidentResolved(IncidentEntity incident)
     {
         this.incidents.remove(incident);
         return this;
@@ -124,7 +124,7 @@ public class WorkflowInstance
         return payload;
     }
 
-    public WorkflowInstance setPayload(String payload)
+    public WorkflowInstanceEntity setPayload(String payload)
     {
         if (payload != null && payload.length() > 0)
         {
@@ -218,7 +218,7 @@ public class WorkflowInstance
         return ended;
     }
 
-    public WorkflowInstance setEnded(boolean ended)
+    public WorkflowInstanceEntity setEnded(boolean ended)
     {
         this.ended = ended;
         return this;
@@ -244,7 +244,7 @@ public class WorkflowInstance
         this.workflowVersion = workflowVersion;
     }
 
-    public List<Incident> getIncidents()
+    public List<IncidentEntity> getIncidents()
     {
         return this.incidents;
     }
@@ -254,7 +254,7 @@ public class WorkflowInstance
         return lastEventPosition;
     }
 
-    public WorkflowInstance setLastEventPosition(long lastEventPosition)
+    public WorkflowInstanceEntity setLastEventPosition(long lastEventPosition)
     {
         this.lastEventPosition = lastEventPosition;
         return this;

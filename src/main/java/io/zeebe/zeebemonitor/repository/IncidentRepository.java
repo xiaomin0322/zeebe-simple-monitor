@@ -15,10 +15,10 @@
  */
 package io.zeebe.zeebemonitor.repository;
 
-import io.zeebe.zeebemonitor.entity.Incident;
+import io.zeebe.zeebemonitor.entity.IncidentEntity;
 import org.springframework.data.repository.CrudRepository;
 
-public interface IncidentRepository extends CrudRepository<Incident, Long>
+public interface IncidentRepository extends CrudRepository<IncidentEntity, Long>
 {
 
 }

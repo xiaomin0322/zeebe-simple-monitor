@@ -15,10 +15,10 @@
  */
 package io.zeebe.zeebemonitor.repository;
 
-import io.zeebe.zeebemonitor.entity.WorkflowDefinition;
+import io.zeebe.zeebemonitor.entity.WorkflowEntity;
 import org.springframework.data.repository.CrudRepository;
 
-public interface WorkflowDefinitionRepository extends CrudRepository<WorkflowDefinition, Long>
+public interface WorkflowDefinitionRepository extends CrudRepository<WorkflowEntity, Long>
 {
 
 }

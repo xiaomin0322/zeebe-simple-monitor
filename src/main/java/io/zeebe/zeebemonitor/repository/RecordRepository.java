@@ -15,10 +15,10 @@
  */
 package io.zeebe.zeebemonitor.repository;
 
-import io.zeebe.zeebemonitor.entity.RecordLog;
+import io.zeebe.zeebemonitor.entity.RecordEntity;
 import org.springframework.data.repository.CrudRepository;
 
-public interface RecordLogRepository extends CrudRepository<RecordLog, Long>
+public interface RecordRepository extends CrudRepository<RecordEntity, Long>
 {
-    RecordLog findByPartitionIdAndPosition(int partitionId, long position);
+    RecordEntity findByPartitionIdAndPosition(int partitionId, long position);
 }

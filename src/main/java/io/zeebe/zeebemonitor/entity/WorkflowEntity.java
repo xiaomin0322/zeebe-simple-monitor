@@ -20,7 +20,7 @@ import javax.persistence.*;
 import io.zeebe.client.api.commands.WorkflowResource;
 
 @Entity
-public class WorkflowDefinition
+public class WorkflowEntity
 {
 
     @Id
@@ -41,9 +41,9 @@ public class WorkflowDefinition
     @Transient
     private long countEnded;
 
-    public static WorkflowDefinition from(WorkflowResource workflowResource)
+    public static WorkflowEntity from(WorkflowResource workflowResource)
     {
-        final WorkflowDefinition dto = new WorkflowDefinition();
+        final WorkflowEntity dto = new WorkflowEntity();
 
         dto.setWorkflowKey(workflowResource.getWorkflowKey());
         dto.setVersion(workflowResource.getVersion());

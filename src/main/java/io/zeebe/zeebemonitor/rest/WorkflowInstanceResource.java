@@ -17,11 +17,11 @@ package io.zeebe.zeebemonitor.rest;
 
 import io.zeebe.client.api.events.WorkflowInstanceEvent;
 import io.zeebe.client.api.record.ZeebeObjectMapper;
-import io.zeebe.zeebemonitor.entity.RecordLog;
-import io.zeebe.zeebemonitor.entity.WorkflowInstance;
-import io.zeebe.zeebemonitor.repository.RecordLogRepository;
+import io.zeebe.zeebemonitor.entity.RecordEntity;
+import io.zeebe.zeebemonitor.entity.WorkflowInstanceEntity;
+import io.zeebe.zeebemonitor.repository.RecordRepository;
 import io.zeebe.zeebemonitor.repository.WorkflowInstanceRepository;
-import io.zeebe.zeebemonitor.zeebe.ZeebeConnections;
+import io.zeebe.zeebemonitor.zeebe.ZeebeConnectionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -31,16 +31,16 @@ public class WorkflowInstanceResource
 {
 
     @Autowired
-    private ZeebeConnections connections;
+    private ZeebeConnectionService connections;
 
     @Autowired
     private WorkflowInstanceRepository workflowInstanceRepository;
 
     @Autowired
-    private RecordLogRepository recordRepository;
+    private RecordRepository recordRepository;
 
     @RequestMapping("/")
-    public Iterable<WorkflowInstance> getWorkflowInstances()
+    public Iterable<WorkflowInstanceEntity> getWorkflowInstances()
     {
         return workflowInstanceRepository.findAll();
     }
@@ -49,7 +49,7 @@ public class WorkflowInstanceResource
     public void cancelWorkflowInstance(@PathVariable("id") String id) throws Exception
     {
 
-        final WorkflowInstance workflowInstance = workflowInstanceRepository.findOne(id);
+        final WorkflowInstanceEntity workflowInstance = workflowInstanceRepository.findOne(id);
         if (workflowInstance != null)
         {
             final WorkflowInstanceEvent event = findWorkflowInstanceEvent(workflowInstance.getPartitionId(), workflowInstance.getWorkflowInstanceKey());
@@ -68,7 +68,7 @@ public class WorkflowInstanceResource
     public void updatePayload(@PathVariable("id") String id, @RequestBody String payload) throws Exception
     {
 
-        final WorkflowInstance workflowInstance = workflowInstanceRepository.findOne(id);
+        final WorkflowInstanceEntity workflowInstance = workflowInstanceRepository.findOne(id);
         if (workflowInstance != null)
         {
             final WorkflowInstanceEvent event = findWorkflowInstanceEvent(workflowInstance.getPartitionId(), workflowInstance.getLastEventPosition());
@@ -86,7 +86,7 @@ public class WorkflowInstanceResource
 
     private WorkflowInstanceEvent findWorkflowInstanceEvent(int partitionId, long position) throws Exception
     {
-        final RecordLog record = recordRepository.findByPartitionIdAndPosition(partitionId, position);
+        final RecordEntity record = recordRepository.findByPartitionIdAndPosition(partitionId, position);
 
         final ZeebeObjectMapper objectMapper = connections.getClient().objectMapper();
 
