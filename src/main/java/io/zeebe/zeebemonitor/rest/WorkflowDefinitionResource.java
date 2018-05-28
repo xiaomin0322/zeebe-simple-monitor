@@ -24,7 +24,7 @@ import io.zeebe.client.api.commands.Workflow;
 import io.zeebe.client.api.commands.WorkflowResource;
 import io.zeebe.client.api.events.DeploymentEvent;
 import io.zeebe.zeebemonitor.entity.*;
-import io.zeebe.zeebemonitor.repository.WorkflowDefinitionRepository;
+import io.zeebe.zeebemonitor.repository.WorkflowRepository;
 import io.zeebe.zeebemonitor.repository.WorkflowInstanceRepository;
 import io.zeebe.zeebemonitor.zeebe.ZeebeConnectionService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,7 +39,7 @@ public class WorkflowDefinitionResource
     private ZeebeConnectionService connections;
 
     @Autowired
-    private WorkflowDefinitionRepository workflowDefinitionRepository;
+    private WorkflowRepository workflowDefinitionRepository;
 
     @Autowired
     private WorkflowInstanceRepository workflowInstanceRepository;

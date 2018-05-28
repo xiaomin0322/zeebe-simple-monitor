@@ -25,7 +25,7 @@ import org.springframework.stereotype.Component;
 public class ZeebeConnectionService
 {
     @Autowired
-    private WorkflowDefinitionRepository workflowDefinitionRepository;
+    private WorkflowRepository workflowRepository;
 
     @Autowired
     private WorkflowInstanceRepository workflowInstanceRepository;
@@ -34,7 +34,7 @@ public class ZeebeConnectionService
     private IncidentRepository incidentRepository;
 
     @Autowired
-    private RecordRepository loggedEventRepository;
+    private RecordRepository recordRepository;
 
     @Autowired
     private ConfigurationRepository configurationRepository;
@@ -99,9 +99,9 @@ public class ZeebeConnectionService
     public void deleteAllData()
     {
         workflowInstanceRepository.deleteAll();
-        workflowDefinitionRepository.deleteAll();
+        workflowRepository.deleteAll();
         incidentRepository.deleteAll();
-        loggedEventRepository.deleteAll();
+        recordRepository.deleteAll();
         configurationRepository.deleteAll();
     }
 
