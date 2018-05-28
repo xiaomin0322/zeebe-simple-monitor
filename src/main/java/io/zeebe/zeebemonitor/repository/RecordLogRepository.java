@@ -20,5 +20,5 @@ import org.springframework.data.repository.CrudRepository;
 
 public interface RecordLogRepository extends CrudRepository<RecordLog, Long>
 {
-
+    RecordLog findByPartitionIdAndPosition(int partitionId, long position);
 }

@@ -24,16 +24,20 @@ public class RecordLog
     @GeneratedValue
     private Long id;
 
+    private int partitionId;
+    private long position;
+
     @Column(length = 20000)
     private String content;
 
     public RecordLog()
-    {
-    }
+    { }
 
-    public RecordLog(String content)
+    public RecordLog(int partitionId, long position, String content)
     {
-        this.setContent(content);
+        this.partitionId = partitionId;
+        this.position = position;
+        this.content = content;
     }
 
     public String getContent()
@@ -46,6 +50,24 @@ public class RecordLog
         this.content = content;
     }
 
+    public int getPartitionId()
+    {
+        return partitionId;
+    }
 
+    public void setPartitionId(int partitionId)
+    {
+        this.partitionId = partitionId;
+    }
+
+    public long getPosition()
+    {
+        return position;
+    }
+
+    public void setPosition(long position)
+    {
+        this.position = position;
+    }
 
 }

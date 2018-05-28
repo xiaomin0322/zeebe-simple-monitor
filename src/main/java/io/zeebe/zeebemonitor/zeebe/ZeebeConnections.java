@@ -22,6 +22,7 @@ import javax.annotation.PostConstruct;
 import io.zeebe.client.ZeebeClient;
 import io.zeebe.client.api.events.IncidentEvent;
 import io.zeebe.client.api.events.WorkflowInstanceEvent;
+import io.zeebe.client.api.record.RecordMetadata;
 import io.zeebe.zeebemonitor.Constants;
 import io.zeebe.zeebemonitor.entity.*;
 import io.zeebe.zeebemonitor.repository.*;
@@ -179,7 +180,8 @@ public class ZeebeConnections
 
         client.topicClient().newSubscription().name(untypedSubscriptionName).recordHandler((record) ->
         {
-            loggedEventRepository.save(new RecordLog(record.toJson()));
+            final RecordMetadata metadata = record.getMetadata();
+            loggedEventRepository.save(new RecordLog(metadata.getPartitionId(), metadata.getPosition(), record.toJson()));
         })
         .startAtHeadOfTopic()
         .open();

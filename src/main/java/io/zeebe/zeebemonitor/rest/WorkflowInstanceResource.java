@@ -15,12 +15,11 @@
  */
 package io.zeebe.zeebemonitor.rest;
 
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.TimeUnit;
-
 import io.zeebe.client.api.events.WorkflowInstanceEvent;
-import io.zeebe.client.api.subscription.TopicSubscription;
+import io.zeebe.client.api.record.ZeebeObjectMapper;
+import io.zeebe.zeebemonitor.entity.RecordLog;
 import io.zeebe.zeebemonitor.entity.WorkflowInstance;
+import io.zeebe.zeebemonitor.repository.RecordLogRepository;
 import io.zeebe.zeebemonitor.repository.WorkflowInstanceRepository;
 import io.zeebe.zeebemonitor.zeebe.ZeebeConnections;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -37,6 +36,9 @@ public class WorkflowInstanceResource
     @Autowired
     private WorkflowInstanceRepository workflowInstanceRepository;
 
+    @Autowired
+    private RecordLogRepository recordRepository;
+
     @RequestMapping("/")
     public Iterable<WorkflowInstance> getWorkflowInstances()
     {
@@ -50,7 +52,7 @@ public class WorkflowInstanceResource
         final WorkflowInstance workflowInstance = workflowInstanceRepository.findOne(id);
         if (workflowInstance != null)
         {
-            final WorkflowInstanceEvent event = findLastWorkflowInstanceEvent(workflowInstance);
+            final WorkflowInstanceEvent event = findWorkflowInstanceEvent(workflowInstance.getPartitionId(), workflowInstance.getWorkflowInstanceKey());
 
             connections
                 .getClient()
@@ -69,7 +71,7 @@ public class WorkflowInstanceResource
         final WorkflowInstance workflowInstance = workflowInstanceRepository.findOne(id);
         if (workflowInstance != null)
         {
-            final WorkflowInstanceEvent event = findLastWorkflowInstanceEvent(workflowInstance);
+            final WorkflowInstanceEvent event = findWorkflowInstanceEvent(workflowInstance.getPartitionId(), workflowInstance.getLastEventPosition());
 
             connections
                 .getClient()
@@ -82,40 +84,13 @@ public class WorkflowInstanceResource
         }
     }
 
-    private WorkflowInstanceEvent findLastWorkflowInstanceEvent(WorkflowInstance workflowInstance) throws Exception
+    private WorkflowInstanceEvent findWorkflowInstanceEvent(int partitionId, long position) throws Exception
     {
-        final CompletableFuture<WorkflowInstanceEvent> future = new CompletableFuture<>();
+        final RecordLog record = recordRepository.findByPartitionIdAndPosition(partitionId, position);
 
-        TopicSubscription subscription = null;
-        try
-        {
-            final long position = workflowInstance.getLastEventPosition();
+        final ZeebeObjectMapper objectMapper = connections.getClient().objectMapper();
 
-            subscription = connections
-                    .getClient()
-                    .topicClient()
-                     .newSubscription()
-                     .name("wf-instance-lookup")
-                     .workflowInstanceEventHandler(wfEvent ->
-                     {
-                         if (wfEvent.getMetadata().getPosition() == position)
-                         {
-                             future.complete(wfEvent);
-                         }
-                     })
-                     .startAtPosition(workflowInstance.getPartitionId(), position - 1)
-                     .forcedStart()
-                     .open();
-
-            return future.get(10, TimeUnit.SECONDS);
-        }
-        finally
-        {
-            if (subscription != null)
-            {
-                subscription.close();
-            }
-        }
+        return objectMapper.fromJson(record.getContent(), WorkflowInstanceEvent.class);
     }
 
 }
