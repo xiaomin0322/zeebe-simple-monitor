@@ -32,7 +32,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping(path = "/api/workflow")
+@RequestMapping(path = "/api/workflows")
 public class WorkflowResource
 {
     @Autowired

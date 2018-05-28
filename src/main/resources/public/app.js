@@ -48,7 +48,7 @@ function refresh() {
 	} else if (currentPage=="instance") {
 		loadWorkflowInstances();		
 	} else if (currentPage=="logs") {
-		loadBrokerLogs();		
+		loadRecords();		
 	}
 	
 	checkConnection();
@@ -146,7 +146,7 @@ function renderConnectionState(connected) {
 //-------- workflow page
 
 function loadWorkflowDefinitions() {
-	$.get(restAccess + 'workflow/', function(result) {
+	$.get(restAccess + 'workflows/', function(result) {
 	    workflowDefinitions = result;
 	    if (!selectedWorkflowDefinition && workflowDefinitions && workflowDefinitions.length>0) {
 	    	selectedWorkflowDefinition = workflowDefinitions[workflowDefinitions.length - 1];
@@ -209,7 +209,7 @@ function startWorkflowInstance() {
 		console.log(JSON.stringify( $('#payload').val() ));
 		$.ajax({
 	             type : 'POST',
-	             url: restAccess + 'workflow/' + selectedWorkflowDefinition.workflowKey,
+	             url: restAccess + 'workflows/' + selectedWorkflowDefinition.workflowKey,
 	             data:  $('#payload').val(),
 	             contentType: 'application/json; charset=utf-8',
 	             success: function (result) {
@@ -229,7 +229,7 @@ function startWorkflowInstance() {
 //-------- instance page
 
 function loadWorkflowInstances() {
-	$.get(restAccess + 'instance/', function(result) {
+	$.get(restAccess + 'instances/', function(result) {
 	    workflowInstances = result;
 	    if (workflowInstances && workflowInstances.length>0) {
 	    	
@@ -290,7 +290,7 @@ function renderSelectedWorkflowInstance() {
 		renderIncidentsTable();
 
 		$('#workflowInstanceInfo').text('');
-		$.get(restAccess + 'workflow/' + selectedWorkflowInstance.workflowKey, function(result) {
+		$.get(restAccess + 'workflows/' + selectedWorkflowInstance.workflowKey, function(result) {
 			viewer.importXML(result.resource, function(err) {
 							if (err) {
 								console.log('error rendering', err);
@@ -324,14 +324,14 @@ function renderIncidentsTable() {
 
 //-------- log page
 
-function loadBrokerLogs() {
-	$.get(restAccess + 'log/', function(logs) {
+function loadRecords() {
+	$.get(restAccess + 'records/', function(logs) {
 		brokerLogs = logs;
-		renderBrokerLogsTable();
+		renderRecordsTable();
 	});
 }
 
-function renderBrokerLogsTable() {
+function renderRecordsTable() {
 	$("#brokerLogsTable > tbody").html("");
 
 			for (index = brokerLogs.length-1; index >= 0; --index) {
@@ -415,7 +415,7 @@ function uploadModels() {
 	var uploadFiles = function() {
 	    $.ajax({
 	             type : 'POST',
-	             url: restAccess + 'workflow/',
+	             url: restAccess + 'workflows/',
 	             data:  JSON.stringify(filesToUpload),
 	             contentType: 'application/json; charset=utf-8',
 	             success: function (result) {
@@ -492,7 +492,7 @@ function updatePayload() {
 	if (selectedWorkflowInstance) {
 		$.ajax({
 	             type : 'PUT',
-	             url: restAccess + 'instance/' + selectedWorkflowInstance.id + "/update-payload",
+	             url: restAccess + 'instances/' + selectedWorkflowInstance.id + "/update-payload",
 	             data:  $('#payload').val(),
 	             contentType: 'application/json; charset=utf-8',
 	             success: function (result) {
@@ -513,7 +513,7 @@ function cancelWorkflowInstance() {
 	if (selectedWorkflowInstance) {
 		$.ajax({
 	             type : 'DELETE',
-	             url: restAccess + 'instance/' + selectedWorkflowInstance.id,
+	             url: restAccess + 'instances/' + selectedWorkflowInstance.id,
 	             contentType: 'application/json; charset=utf-8',
 	             success: function (result) {
 	             	setTimeout(function() {

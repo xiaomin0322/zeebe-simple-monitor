@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Component
 @RestController
-@RequestMapping("/api/log")
+@RequestMapping("/api/records")
 public class RecordResource
 {
 
