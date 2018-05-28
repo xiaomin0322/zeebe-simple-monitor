@@ -22,6 +22,7 @@ import javax.annotation.PostConstruct;
 import io.zeebe.client.ZeebeClient;
 import io.zeebe.client.api.events.IncidentEvent;
 import io.zeebe.client.api.events.WorkflowInstanceEvent;
+import io.zeebe.client.api.record.Record;
 import io.zeebe.client.api.record.RecordMetadata;
 import io.zeebe.zeebemonitor.Constants;
 import io.zeebe.zeebemonitor.entity.*;
@@ -101,13 +102,11 @@ public class ZeebeConnections
             throw new RuntimeException(String.format("Missing required topic '%s' on broker '%s'", Constants.DEFAULT_TOPIC, conf.getConnectionString()));
         }
 
-        final String clientId = conf.getClientId();
-        final String typedSubscriptionName = clientId + "-1";
-        final String untypedSubscriptionName = clientId + "-2";
+        final String subscriptionName = "zsm-" + conf.getClientId();
 
         client.topicClient()
               .newSubscription()
-              .name(typedSubscriptionName)
+              .name(subscriptionName)
               .incidentEventHandler((event) ->
               {
                   switch (event.getState())
@@ -128,6 +127,8 @@ public class ZeebeConnections
                       default:
                           break;
                   }
+
+                  insertRecord(event);
               })
               .workflowInstanceEventHandler((event) ->
               {
@@ -173,20 +174,22 @@ public class ZeebeConnections
                       default:
                           break;
                   }
+
+                  insertRecord(event);
               })
+              .recordHandler(this::insertRecord)
               .startAtHeadOfTopic()
               .forcedStart()
               .open();
 
-        client.topicClient().newSubscription().name(untypedSubscriptionName).recordHandler((record) ->
-        {
-            final RecordMetadata metadata = record.getMetadata();
-            loggedEventRepository.save(new RecordLog(metadata.getPartitionId(), metadata.getPosition(), record.toJson()));
-        })
-        .startAtHeadOfTopic()
-        .open();
-
         return true;
+    }
+
+    private void insertRecord(Record record)
+    {
+        final RecordMetadata metadata = record.getMetadata();
+
+        loggedEventRepository.save(new RecordLog(metadata.getPartitionId(), metadata.getPosition(), record.toJson()));
     }
 
     private boolean hasDefaultTopicExist(final ZeebeClient client)
