@@ -18,7 +18,6 @@ package io.zeebe.zeebemonitor.rest;
 import java.util.Iterator;
 
 import io.zeebe.zeebemonitor.entity.Configuration;
-import io.zeebe.zeebemonitor.entity.ConfigurationDto;
 import io.zeebe.zeebemonitor.repository.ConfigurationRepository;
 import io.zeebe.zeebemonitor.zeebe.ZeebeConnections;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,21 +39,9 @@ public class BrokerResource
 
 
     @RequestMapping("/")
-    public ConfigurationDto getConfiguration()
+    public Configuration getConfiguration()
     {
-        final Configuration config = getConfig();
-        if (config != null)
-        {
-            final ConfigurationDto dto = new ConfigurationDto();
-
-            dto.setConnectionString(config.getConnectionString());
-
-            return dto;
-        }
-        else
-        {
-            return null;
-        }
+        return getConfig();
     }
 
     private Configuration getConfig()
@@ -73,7 +60,7 @@ public class BrokerResource
     }
 
     @RequestMapping(path = "/connect", method = RequestMethod.POST)
-    public ConfigurationDto connect(@RequestBody String connectionString)
+    public Configuration connect(@RequestBody String connectionString)
     {
         final Configuration config = getConfig();
 
@@ -86,12 +73,9 @@ public class BrokerResource
             final Configuration newConfig = new Configuration(connectionString);
             configurationRepository.save(newConfig);
 
-            final ConfigurationDto dto = new ConfigurationDto();
-            dto.setConnectionString(connectionString);
-
             zeebeConnections.connect(newConfig);
 
-            return dto;
+            return newConfig;
         }
     }
 

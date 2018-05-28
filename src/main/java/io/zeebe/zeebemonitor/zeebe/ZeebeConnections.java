@@ -24,7 +24,6 @@ import io.zeebe.client.api.events.IncidentEvent;
 import io.zeebe.client.api.events.WorkflowInstanceEvent;
 import io.zeebe.client.api.record.Record;
 import io.zeebe.client.api.record.RecordMetadata;
-import io.zeebe.zeebemonitor.Constants;
 import io.zeebe.zeebemonitor.entity.*;
 import io.zeebe.zeebemonitor.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -95,11 +94,6 @@ public class ZeebeConnections
         if (!isConnected())
         {
             return false;
-        }
-
-        if (!hasDefaultTopicExist(client))
-        {
-            throw new RuntimeException(String.format("Missing required topic '%s' on broker '%s'", Constants.DEFAULT_TOPIC, conf.getConnectionString()));
         }
 
         final String subscriptionName = "zsm-" + conf.getClientId();
@@ -190,17 +184,6 @@ public class ZeebeConnections
         final RecordMetadata metadata = record.getMetadata();
 
         loggedEventRepository.save(new RecordLog(metadata.getPartitionId(), metadata.getPosition(), record.toJson()));
-    }
-
-    private boolean hasDefaultTopicExist(final ZeebeClient client)
-    {
-        return client
-                .newTopicsRequest()
-                .send()
-                .join()
-                .getTopics()
-                .stream()
-                .anyMatch(t -> Constants.DEFAULT_TOPIC.equals(t.getName()));
     }
 
     private void workflowInstanceStarted(WorkflowInstance instance)

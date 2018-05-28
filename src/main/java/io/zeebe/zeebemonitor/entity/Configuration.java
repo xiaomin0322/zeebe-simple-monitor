@@ -24,7 +24,7 @@ public class Configuration
 {
     @Id
     @GeneratedValue
-    private String clientId = "zsm-" + UUID.randomUUID().getMostSignificantBits();
+    private String clientId = String.valueOf(UUID.randomUUID().getMostSignificantBits());
 
     private String connectionString;
 
