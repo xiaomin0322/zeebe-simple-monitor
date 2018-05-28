@@ -20,20 +20,14 @@ function cleanupData() {
 		             type : 'POST',
 		             url: restAccess + 'broker/cleanup',
 		             success: function (result) {
-					    loadConfiguration();
-					    refresh();		
+		            	 window.location.replace('/');		
 		             },
 		             error: function (xhr, ajaxOptions, thrownError) {
-		             	console.log(xhr);
-		             	console.log(thrownError);
-		             	showError(xhr.responseJSON.message);
-		             },
+		               	 showErrorResonse(xhr, ajaxOptions, thrownError);
+	                },
 		             crossDomain: true,
 		    });				
 }
-
-
-
 
 function init(page) {	
 	currentPage = page;
@@ -41,17 +35,28 @@ function init(page) {
 }
 
 function refresh() {
+	
 	if (currentPage=='broker') {
 		loadConfiguration();
+		checkConnection();
 	} else if (currentPage=='definition') {
 		loadWorkflowDefinitions();		
 	} else if (currentPage=="instance") {
 		loadWorkflowInstances();		
 	} else if (currentPage=="logs") {
 		loadRecords();		
+	} else if (currentPage=="setup" ) {
+		renderSetup();
 	}
+}
+
+function renderSetup() {
 	
-	checkConnection();
+	loadConfiguration();
+	
+	if (config) {
+		window.location.replace('/');
+	}
 }
 
 // -------- config page
@@ -60,7 +65,7 @@ function loadConfiguration() {
 	
 	$.ajax({
         type : 'GET',
-        url: restAccess + 'broker/',
+        url: restAccess + 'broker/config',
         contentType: 'application/text; charset=utf-8',
         success: function (cfg) {
        	 config = cfg
@@ -74,34 +79,16 @@ function loadConfiguration() {
 	});	
 }
 
-function renderConfiguration(config) {
-	
-	if (config) {
-		
-		$("#connection-string").html(config.connectionString)
-		
-		$("#connect-section").hide()
-		$("#configuration-section").show()
-
-	} else {
-		$("#configuration-section").hide()
-		$("#connect-section").show()
-	}
+function renderConfiguration(config) {	
+	$("#connection-string").html(config.connectionString)	
 }
 
-function connect() {
-	connectToBroker( $('#brokerConnection').val() );
-	$('#brokerConnection').text('');
-}
-
-function connectToBroker(connectionString) {
+function connectToBroker() {
 	$.ajax({
              type : 'POST',
              url: restAccess + 'broker/connect',
-             data: connectionString,
              contentType: 'application/text; charset=utf-8',
              success: function (cfg) {
-            	loadConfiguration();
             	refresh();		
              },
              error: function (xhr, ajaxOptions, thrownError) {
@@ -110,7 +97,29 @@ function connectToBroker(connectionString) {
              timeout: 5000,
              crossDomain: true,
     });				
-}	
+}
+
+function setup() {
+	setupTo( $('#brokerConnection').val() );
+}
+
+function setupTo(connectionString) {
+	$.ajax({
+             type : 'POST',
+             url: restAccess + 'broker/setup',
+             data: connectionString,
+             contentType: 'application/text; charset=utf-8',
+             success: function (cfg) {
+            	 config = cfg
+            	 window.location.replace('/')	
+             },
+             error: function (xhr, ajaxOptions, thrownError) {
+            	 showErrorResonse(xhr, ajaxOptions, thrownError);
+             },
+             timeout: 20000,
+             crossDomain: true,
+    });				
+}
 
 function checkConnection() {
 	$.ajax({
@@ -118,14 +127,12 @@ function checkConnection() {
 	     url: restAccess + 'broker/check-connection',
 	     contentType: 'application/text; charset=utf-8',
 	     success: function (result) {
-	    	 renderConnectionState(result)	
-	    	 
+	    	 renderConnectionState(result)		    	 
 	    	 //setTimeout(checkConnection(), 10000);
 	     },
 	     error: function (xhr, textStatus, thrownError) {
 	    	 	 
-	    	 renderConnectionState(false)
-	    	 
+	    	 renderConnectionState(false)	    	 
 	    	 // setTimeout(checkConnection(), 30000);
 	     },
 	     timeout: 3000,

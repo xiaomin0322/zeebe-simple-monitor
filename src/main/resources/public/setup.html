@@ -44,23 +44,13 @@ em.optional:after {
 <header class="cam-brand-header">
     <!-- depending on your layout, you may want to use the `.container-fluid` class instead below -->
     <div class="container-fluid">
-        <a class="navbar-brand" href="./" title="Zeebe Monitor">
+        <a class="navbar-brand" href="./index.html" title="Zeebe Monitor">
         <span class="brand-name" style="top: 0px;">
           <img style="height: 35px;" src="img/logo.png"/> Zeebe Simple Monitor
         </span>
         </a>
-
-        <!-- this is intended for the site navigation -->
-        <nav class="sections-menu">
-            <ul>
-                <li class="active"><a href="./index.html">Configuration</a></li>
-                <li><a href="./definitions.html">Workflows</a></li>
-                <li><a href="./instances.html">Instances</a></li>
-                <li><a href="./logs.html">Logs</a></li>
-            </ul>
-        </nav>
+       
     </div>
-    
     
 </header>
 
@@ -72,44 +62,27 @@ em.optional:after {
                 <strong>Error:</strong> <span id="errorText"></span>
             </div>
         </div>
-    
+        
     <section class="page-section">
-        <header>
-            <h1>Broker Configuration</h1>
-        </header>
-
+                
         <div class="row">
-            <div class="col-md-8">
-            	
-             	<h2>Connection</h2>
-                        
-            	<div class="form-group">
-                    <label>Broker</label>
-                    <div id="connection-string"></div>
+            <div class="col-md-6">
+            	  	
+	            <h2>Setup</h2>
+	
+				<p>The Zeebe Simple Monitor is not connected to a Broker.</p>
+	
+                <div class="form-group">
+                    <label>Connection to Broker</label>
+                    <input type="text" class="form-control" id="brokerConnection" placeholder="localhost:51015" value="localhost:51015">
                 </div>
                 
-                <div class="form-group">
-                    <label>State</label>
-                    <div id="connection-state"></div>
-                </div>
-                 
+                <button class="btn btn-success" onclick="setup()">Connect</button>
+	                
             </div>
-            
-            <div class="col-md-4">
-                <h2>Reset local data</h2>
-
-				<p>
-                Reset all local data. This is interesting whenever you cleanup the broker and local client data might not match Zeebe data any more. As all
-                state is reconstructed via the Zeebe logs, you don't loose anything.
-				</p>
-	
-                <button class="btn" onclick="cleanupData()">Delete all local data</button>
-            </div>
-            
        </div>
-       
     </section>
-      
+    
 </div>
 
 <footer class="cam-brand-footer">
@@ -125,7 +98,7 @@ em.optional:after {
 </footer>
 <script>
   $(document).ready(function() {  
-        init('broker');
+        init('setup');
   });
 
 </script>

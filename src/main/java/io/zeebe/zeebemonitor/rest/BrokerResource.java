@@ -15,8 +15,6 @@
  */
 package io.zeebe.zeebemonitor.rest;
 
-import java.util.Iterator;
-
 import io.zeebe.zeebemonitor.entity.ConfigurationEntity;
 import io.zeebe.zeebemonitor.repository.ConfigurationRepository;
 import io.zeebe.zeebemonitor.zeebe.ZeebeConnectionService;
@@ -36,47 +34,40 @@ public class BrokerResource
     @Autowired
     private ZeebeConnectionService zeebeConnections;
 
-
-
-    @RequestMapping("/")
+    @RequestMapping("/config")
     public ConfigurationEntity getConfiguration()
     {
-        return getConfig();
-    }
-
-    private ConfigurationEntity getConfig()
-    {
-        final Iterable<ConfigurationEntity> configs = configurationRepository.findAll();
-        final Iterator<ConfigurationEntity> configIterator = configs.iterator();
-
-        if (configIterator.hasNext())
-        {
-            return configIterator.next();
-        }
-        else
-        {
-            return null;
-        }
+        return configurationRepository
+                .getConfiguration()
+                .orElseGet(() -> null);
     }
 
     @RequestMapping(path = "/connect", method = RequestMethod.POST)
-    public ConfigurationEntity connect(@RequestBody String connectionString)
+    public void connect()
     {
-        final ConfigurationEntity config = getConfig();
+        configurationRepository.getConfiguration().ifPresent(config ->
+        {
+            if (!zeebeConnections.isConnected())
+            {
+                zeebeConnections.connect(config);
+            }
+        });
+    }
 
-        if (config != null)
+    @RequestMapping(path = "/setup", method = RequestMethod.POST)
+    public ConfigurationEntity setup(@RequestBody String connectionString)
+    {
+        configurationRepository.getConfiguration().ifPresent(config ->
         {
             throw new RuntimeException("Monitor is already connected to: " + config.getConnectionString());
-        }
-        else
-        {
-            final ConfigurationEntity newConfig = new ConfigurationEntity(connectionString);
-            configurationRepository.save(newConfig);
+        });
 
-            zeebeConnections.connect(newConfig);
+        final ConfigurationEntity config = new ConfigurationEntity(connectionString);
+        configurationRepository.save(config);
 
-            return newConfig;
-        }
+        zeebeConnections.connect(config);
+
+        return config;
     }
 
     @RequestMapping(path = "/check-connection")
