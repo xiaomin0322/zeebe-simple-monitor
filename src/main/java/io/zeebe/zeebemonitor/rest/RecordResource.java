@@ -25,16 +25,16 @@ import org.springframework.web.bind.annotation.RestController;
 @Component
 @RestController
 @RequestMapping("/api/log")
-public class RecordLogResource
+public class RecordResource
 {
 
     @Autowired
-    private RecordRepository loggedEventRepository;
+    private RecordRepository recordRepository;
 
     @RequestMapping("/")
-    public Iterable<RecordEntity> getLogs()
+    public Iterable<RecordEntity> getRecords()
     {
-        return loggedEventRepository.findAll();
+        return recordRepository.findAll();
     }
 
 }

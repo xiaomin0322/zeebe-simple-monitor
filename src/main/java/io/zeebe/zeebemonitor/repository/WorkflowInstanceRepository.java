@@ -21,10 +21,10 @@ import org.springframework.data.repository.CrudRepository;
 
 public interface WorkflowInstanceRepository extends CrudRepository<WorkflowInstanceEntity, String>
 {
-    @Query("SELECT COUNT(wf) FROM WorkflowInstance wf WHERE wf.workflowKey=?1 and wf.ended=false")
+    @Query("SELECT COUNT(wf) FROM WorkflowInstanceEntity wf WHERE wf.workflowKey=?1 and wf.ended=false")
     long countRunningInstances(long workfloKey);
 
-    @Query("SELECT COUNT(wf) FROM WorkflowInstance wf WHERE wf.workflowKey=?1 and wf.ended=true")
+    @Query("SELECT COUNT(wf) FROM WorkflowInstanceEntity wf WHERE wf.workflowKey=?1 and wf.ended=true")
     long countEndedInstances(long workflowKey);
 
     WorkflowInstanceEntity findByWorkflowInstanceKeyAndPartitionId(long workflowInstanceKeys, int partitionId);

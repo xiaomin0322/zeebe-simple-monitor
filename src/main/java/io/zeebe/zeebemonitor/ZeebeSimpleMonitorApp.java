@@ -15,22 +15,38 @@
  */
 package io.zeebe.zeebemonitor;
 
+import java.util.concurrent.*;
+
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 
 import io.zeebe.zeebemonitor.repository.ConfigurationRepository;
+import io.zeebe.zeebemonitor.zeebe.WorkflowService;
 import io.zeebe.zeebemonitor.zeebe.ZeebeConnectionService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+import org.springframework.scheduling.annotation.*;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 @SpringBootApplication
+@EnableScheduling
+@EnableAsync
 public class ZeebeSimpleMonitorApp
 {
+    private static final Logger LOG = LoggerFactory.getLogger(ZeebeSimpleMonitorApp.class);
+
     @Autowired
     private ZeebeConnectionService connectionService;
 
     @Autowired
     private ConfigurationRepository configurationRepository;
+
+    @Autowired
+    private WorkflowService workflowService;
 
     public static void main(String... args)
     {
@@ -40,9 +56,48 @@ public class ZeebeSimpleMonitorApp
     @PostConstruct
     public void initConnection()
     {
+        LOG.info("initialize connection");
+
         configurationRepository.getConfiguration().ifPresent(config ->
         {
+            LOG.debug("configuration found");
+
             connectionService.connect(config);
         });
     }
+
+    @Scheduled(fixedRate = 10_000)
+    public void synchronizeWithBroker()
+    {
+        if (connectionService.isConnected())
+        {
+            workflowService.synchronizeWithBroker();
+        }
+    }
+
+    @PreDestroy
+    public void close()
+    {
+        connectionService.disconnect();
+    }
+
+    @Bean
+    public ScheduledExecutorService scheduledExecutor()
+    {
+        final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+
+        return executor;
+    }
+
+    @Bean
+    public Executor asyncExecutor()
+    {
+        final ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(1);
+        executor.setMaxPoolSize(1);
+        executor.setQueueCapacity(32);
+        executor.initialize();
+        return executor;
+    }
+
 }

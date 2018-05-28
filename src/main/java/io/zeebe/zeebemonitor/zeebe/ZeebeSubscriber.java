@@ -24,12 +24,16 @@ import io.zeebe.client.api.subscription.*;
 import io.zeebe.client.api.subscription.TopicSubscriptionBuilderStep1.TopicSubscriptionBuilderStep3;
 import io.zeebe.zeebemonitor.entity.*;
 import io.zeebe.zeebemonitor.repository.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
 public class ZeebeSubscriber
 {
+    private static final Logger LOG = LoggerFactory.getLogger(ZeebeSubscriber.class);
+
     private static final String SUBSCRIPTION_NAME = "zeebe-simple-monitor";
 
     @Autowired
@@ -48,6 +52,8 @@ public class ZeebeSubscriber
     {
         configurationRepository.getConfiguration().ifPresent(config ->
         {
+            LOG.debug("open subscription");
+
             final String subscriptionName = config.getSubscriptionName();
             final Handler handler = new Handler();
 
@@ -226,11 +232,12 @@ public class ZeebeSubscriber
 
     private void workflowInstanceIncidentOccured(IncidentEvent event)
     {
-        final IncidentEntity incident = new IncidentEntity(event.getMetadata().getKey(), event.getActivityId(), event.getErrorType(), event.getErrorMessage());
+        final RecordMetadata metadata = event.getMetadata();
+        final IncidentEntity incident = new IncidentEntity(metadata.getPartitionId(), metadata.getKey(), event.getWorkflowInstanceKey(), event.getActivityId(), event.getErrorType(), event.getErrorMessage());
 
         incidentRepository.save(incident);
 
-        final WorkflowInstanceEntity instance = workflowInstanceRepository.findByWorkflowInstanceKeyAndPartitionId(event.getWorkflowInstanceKey(), event.getMetadata().getPartitionId());
+        final WorkflowInstanceEntity instance = workflowInstanceRepository.findByWorkflowInstanceKeyAndPartitionId(event.getWorkflowInstanceKey(), metadata.getPartitionId());
 
         instance.incidentOccured(incident);
 
@@ -239,7 +246,8 @@ public class ZeebeSubscriber
 
     private void workflowInstanceIncidentUpdated(IncidentEvent event)
     {
-        final IncidentEntity incident = incidentRepository.findOne(event.getMetadata().getKey());
+        final RecordMetadata metadata = event.getMetadata();
+        final IncidentEntity incident = incidentRepository.getIncident(metadata.getPartitionId(), metadata.getKey());
 
         if (incident != null)
         {
@@ -250,7 +258,8 @@ public class ZeebeSubscriber
 
     private void workflowInstanceIncidentResolved(IncidentEvent event)
     {
-        final IncidentEntity incident = incidentRepository.findOne(event.getMetadata().getKey());
+        final RecordMetadata metadata = event.getMetadata();
+        final IncidentEntity incident = incidentRepository.getIncident(metadata.getPartitionId(), metadata.getKey());
 
         final WorkflowInstanceEntity instance = workflowInstanceRepository.findByWorkflowInstanceKeyAndPartitionId(event.getWorkflowInstanceKey(), event.getMetadata().getPartitionId());
 

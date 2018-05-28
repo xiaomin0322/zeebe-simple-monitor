@@ -15,12 +15,9 @@
  */
 package io.zeebe.zeebemonitor.repository;
 
-import java.util.List;
-
 import io.zeebe.zeebemonitor.entity.IncidentEntity;
-import org.springframework.data.repository.CrudRepository;
 
-public interface IncidentRepository extends CrudRepository<IncidentEntity, String>, IncidentRepositoryCustom
+public interface IncidentRepositoryCustom
 {
-    List<IncidentEntity> findByPartitionIdAndKey(int partitionId, long key);
+    IncidentEntity getIncident(int partitionId, long key);
 }

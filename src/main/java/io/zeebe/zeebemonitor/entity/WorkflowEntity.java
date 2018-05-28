@@ -35,12 +35,6 @@ public class WorkflowEntity
     @Column(length = 100000)
     private String resource;
 
-    @Transient
-    private long countRunning;
-
-    @Transient
-    private long countEnded;
-
     public static WorkflowEntity from(WorkflowResource workflowResource)
     {
         final WorkflowEntity dto = new WorkflowEntity();
@@ -83,26 +77,6 @@ public class WorkflowEntity
     public void setVersion(int version)
     {
         this.version = version;
-    }
-
-    public long getCountRunning()
-    {
-        return countRunning;
-    }
-
-    public void setCountRunning(long countRunning)
-    {
-        this.countRunning = countRunning;
-    }
-
-    public long getCountEnded()
-    {
-        return countEnded;
-    }
-
-    public void setCountEnded(long countEnded)
-    {
-        this.countEnded = countEnded;
     }
 
     public long getWorkflowKey()

@@ -18,12 +18,16 @@ package io.zeebe.zeebemonitor.zeebe;
 import io.zeebe.client.ZeebeClient;
 import io.zeebe.zeebemonitor.entity.ConfigurationEntity;
 import io.zeebe.zeebemonitor.repository.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 @Component
 public class ZeebeConnectionService
 {
+    private static final Logger LOG = LoggerFactory.getLogger(ZeebeConnectionService.class);
+
     @Autowired
     private WorkflowRepository workflowRepository;
 
@@ -43,17 +47,28 @@ public class ZeebeConnectionService
     private ZeebeSubscriber subscriber;
 
     private ZeebeClient client;
+    private boolean connected = false;
 
     public void connect(final ConfigurationEntity config)
     {
+        LOG.info("connect to '{}'", config.getConnectionString());
+
         this.client = ZeebeClient
                 .newClientBuilder()
                 .brokerContactPoint(config.getConnectionString())
                 .build();
 
-        if (isConnected())
+        if (checkConnection())
         {
+            LOG.info("connected to {}", config.getConnectionString());
+
+            connected = true;
+
             subscriber.openSubscription(client);
+        }
+        else
+        {
+            LOG.warn("Failed to connect to {}", config.getConnectionString());
         }
     }
 
@@ -71,11 +86,12 @@ public class ZeebeConnectionService
 
     public boolean isConnected()
     {
-        if (client == null)
-        {
-            return false;
-        }
-        else
+        return connected;
+    }
+
+    public boolean checkConnection()
+    {
+        if (client != null)
         {
             // send request to check if connected or not
             try
@@ -89,15 +105,25 @@ public class ZeebeConnectionService
                 return false;
             }
         }
+        else
+        {
+            return false;
+        }
     }
 
     public void disconnect()
     {
+        LOG.info("disconnect");
+
         client.close();
     }
 
     public void deleteAllData()
     {
+        LOG.info("delete all data");
+
+        disconnect();
+
         workflowInstanceRepository.deleteAll();
         workflowRepository.deleteAll();
         incidentRepository.deleteAll();

@@ -22,13 +22,14 @@ import javax.persistence.*;
 @Entity
 public class IncidentEntity
 {
-
     @GeneratedValue
     @Id
     private String id = UUID.randomUUID().toString();
 
-    private long incidentKey;
+    private int partitionId;
+    private long key;
 
+    private long workflowInstanceKey;
     private String activityId;
     private String errorType;
     private String errorMessage;
@@ -37,9 +38,12 @@ public class IncidentEntity
     {
     }
 
-    public IncidentEntity(long incidentKey, String activityId, String errorType, String errorMessage)
+    public IncidentEntity(int partitionId, long key, long workflowInstanceKey, String activityId, String errorType, String errorMessage)
     {
-        this.setIncidentKey(incidentKey);
+        this.partitionId = partitionId;
+
+        this.key = key;
+        this.setWorkflowInstanceKey(workflowInstanceKey);
         this.activityId = activityId;
         this.errorType = errorType;
         this.errorMessage = errorMessage;
@@ -84,14 +88,72 @@ public class IncidentEntity
 
     public long getIncidentKey()
     {
-        return incidentKey;
+        return key;
     }
 
-    public void setIncidentKey(long incidentKey)
+    public void setKey(long incidentKey)
     {
-        this.incidentKey = incidentKey;
+        this.key = incidentKey;
     }
 
+    public int getPartitionId()
+    {
+        return partitionId;
+    }
+
+    public void setPartitionId(int partitionId)
+    {
+        this.partitionId = partitionId;
+    }
+
+    public long getWorkflowInstanceKey()
+    {
+        return workflowInstanceKey;
+    }
+
+    public void setWorkflowInstanceKey(long workflowInstanceKey)
+    {
+        this.workflowInstanceKey = workflowInstanceKey;
+    }
+
+    @Override
+    public int hashCode()
+    {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((id == null) ? 0 : id.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (this == obj)
+        {
+            return true;
+        }
+        if (obj == null)
+        {
+            return false;
+        }
+        if (getClass() != obj.getClass())
+        {
+            return false;
+        }
+        final IncidentEntity other = (IncidentEntity) obj;
+        if (id == null)
+        {
+            if (other.id != null)
+            {
+                return false;
+            }
+        }
+        else if (!id.equals(other.id))
+        {
+            return false;
+        }
+        return true;
+    }
 
 
 }

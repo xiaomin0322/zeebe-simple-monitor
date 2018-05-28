@@ -48,7 +48,6 @@ public class WorkflowInstanceResource
     @RequestMapping(path = "/{id}", method = RequestMethod.DELETE)
     public void cancelWorkflowInstance(@PathVariable("id") String id) throws Exception
     {
-
         final WorkflowInstanceEntity workflowInstance = workflowInstanceRepository.findOne(id);
         if (workflowInstance != null)
         {
@@ -61,6 +60,10 @@ public class WorkflowInstanceResource
                 .newCancelInstanceCommand(event)
                 .send()
                 .join();
+        }
+        else
+        {
+            throw new RuntimeException("no workflow instance found with id: " + id);
         }
     }
 
@@ -82,11 +85,20 @@ public class WorkflowInstanceResource
                 .send()
                 .join();
         }
+        else
+        {
+            throw new RuntimeException("no workflow instance found with id: " + id);
+        }
     }
 
     private WorkflowInstanceEvent findWorkflowInstanceEvent(int partitionId, long position) throws Exception
     {
         final RecordEntity record = recordRepository.findByPartitionIdAndPosition(partitionId, position);
+
+        if (record == null)
+        {
+            throw new RuntimeException(String.format("no record found at partition '%d' and position '%d'", partitionId, position));
+        }
 
         final ZeebeObjectMapper objectMapper = connections.getClient().objectMapper();
 
