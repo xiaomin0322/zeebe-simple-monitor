@@ -44,6 +44,9 @@ public class ZeebeConnectionService
     private ConfigurationRepository configurationRepository;
 
     @Autowired
+    private PartitionRepository partitionRepository;
+
+    @Autowired
     private ZeebeSubscriber subscriber;
 
     private ZeebeClient client;
@@ -129,6 +132,7 @@ public class ZeebeConnectionService
         incidentRepository.deleteAll();
         recordRepository.deleteAll();
         configurationRepository.deleteAll();
+        partitionRepository.deleteAll();
     }
 
 }
