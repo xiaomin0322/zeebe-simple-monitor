@@ -264,7 +264,7 @@ function renderWorkflowDefinitionTable() {
 	for (index = workflowDefinitions.length-1; index >= 0; --index) {
 		var def = workflowDefinitions[index];
 		var selectedClass = '';
-		if (selectedWorkflowDefinition && def.key==selectedWorkflowDefinition.key && def.version==selectedWorkflowDefinition.version) {
+		if (selectedWorkflowDefinition && def.workflowKey==selectedWorkflowDefinition.workflowKey) {
 			selectedClass ='class="tngp-table-selected"';
 		}
 		$('#workflowDefinitionTable tbody').append("<tr><td "+selectedClass+"><a onclick='selectWorkflowDefinition("+index+")'>"+def.bpmnProcessId + " (" + def.version + ")" +"</a></td><td "+selectedClass+">"+def.countRunning+"</td></tr>");
