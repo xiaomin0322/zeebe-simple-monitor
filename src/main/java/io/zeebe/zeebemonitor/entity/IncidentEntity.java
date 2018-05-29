@@ -43,7 +43,7 @@ public class IncidentEntity
         this.partitionId = partitionId;
 
         this.key = key;
-        this.setWorkflowInstanceKey(workflowInstanceKey);
+        this.workflowInstanceKey = workflowInstanceKey;
         this.activityId = activityId;
         this.errorType = errorType;
         this.errorMessage = errorMessage;

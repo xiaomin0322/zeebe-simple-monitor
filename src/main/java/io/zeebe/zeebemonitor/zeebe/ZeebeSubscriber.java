@@ -249,11 +249,11 @@ public class ZeebeSubscriber
         final RecordMetadata metadata = event.getMetadata();
         final IncidentEntity incident = incidentRepository.getIncident(metadata.getPartitionId(), metadata.getKey());
 
-        if (incident != null)
-        {
-            incidentRepository.save(//
-                    incident.setErrorType(event.getErrorType()).setErrorMessage(event.getErrorMessage()));
-        }
+        incident
+            .setErrorType(event.getErrorType())
+            .setErrorMessage(event.getErrorMessage());
+
+        incidentRepository.save(incident);
     }
 
     private void workflowInstanceIncidentResolved(IncidentEvent event)

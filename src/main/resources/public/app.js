@@ -392,6 +392,9 @@ function renderSelectedWorkflowInstance() {
 				JSON.parse(selectedWorkflowInstance.payload), undefined, 2
 			));
 		
+		$("#update-payload").prop("disabled", selectedWorkflowInstance.ended);
+		$("#cancel-workflow-instance").prop("disabled", selectedWorkflowInstance.ended);
+		
 		renderIncidentsTable();
 
 		$('#workflowInstanceInfo').text('');
