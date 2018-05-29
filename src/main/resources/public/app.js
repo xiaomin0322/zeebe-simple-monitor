@@ -39,6 +39,7 @@ function refresh() {
 	if (currentPage=='broker') {
 		loadConfiguration();
 		checkConnection();
+		loadTopology();
 	} else if (currentPage=='definition') {
 		loadWorkflowDefinitions();		
 	} else if (currentPage=="instance") {
@@ -82,6 +83,36 @@ function loadConfiguration() {
 function renderConfiguration(config) {	
 	$("#connection-string").html(config.connectionString)	
 }
+
+function loadTopology() {
+	
+	$.ajax({
+        type : 'GET',
+        url: restAccess + 'broker/topology',
+        contentType: 'application/json; charset=utf-8',
+        success: function (topology) {
+       	 renderTopology(topology)
+        },
+        error: function (xhr, ajaxOptions, thrownError) {
+       	 showErrorResonse(xhr, ajaxOptions, thrownError);
+        },
+        timeout: 3000,
+        crossDomain: true,
+	});	
+}
+
+function renderTopology(topology) {
+	$("#topologyTable > tbody").html("");
+	for (index = 0; index < topology.length; index++) {
+		var broker = topology[index];
+		
+		for (p = 0; p < broker.partitions.length; p++) {
+			var partition = broker.partitions[p];
+			
+			$('#topologyTable tbody').append("<tr><td>" + broker.address + "</td><td>" + partition.topicName + "</td><td>" + partition.partitionId + "</td><td>" + partition.role + "</td></tr>");
+		}
+	}
+}	
 
 function connectToBroker() {
 	$.ajax({

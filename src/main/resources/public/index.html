@@ -75,11 +75,16 @@ em.optional:after {
     
     <section class="page-section">
         <header>
-            <h1>Broker Configuration</h1>
+            <h1>Broker Configuration
+            
+            <a onclick="refresh()" class="btn btn-default"><span class="glyphicon glyphicon-refresh"></span></a>
+            
+            </h1>
+            
         </header>
 
         <div class="row">
-            <div class="col-md-8">
+            <div class="col-md-6">
             	
              	<h2>Connection</h2>
                         
@@ -93,7 +98,7 @@ em.optional:after {
                     <div id="connection-state"></div>
                 </div>
                  
-            </div>
+            </div>            
             
             <div class="col-md-4">
                 <h2>Reset local data</h2>
@@ -104,6 +109,26 @@ em.optional:after {
 				</p>
 	
                 <button class="btn" onclick="cleanupData()">Delete all local data</button>
+            </div>
+            
+            <div class="col-md-6">
+                <h2>
+                    Topology                    
+                </h2>
+                <table id="topologyTable" class="table table-striped">
+                    <thead>
+                    <th>Broker</th>
+                    <th>Topic</th>
+                    <th>Partition Id</th>
+                    <th>Role</th>
+                    </thead>
+                    <tr>
+                        <td class="tngp-table-selected"></td>
+                        <td class="tngp-table-selected"></td>
+                        <td class="tngp-table-selected"></td>
+                        <td class="tngp-table-selected"></td>
+                    </tr>
+                </table>
             </div>
             
        </div>
