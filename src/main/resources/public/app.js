@@ -363,7 +363,7 @@ function renderWorkflowInstanceTable() {
 			selectedClass ='class="tngp-table-selected"';
 		}
 		$('#workflowInstanceTable tbody').append(
-			"<tr><td "+selectedClass+"><a onclick='selectWorkflowInstance("+index+")'>"+def.workflowInstanceKey +"</a></td><td "+selectedClass+">"+def.bpmnProcessId+"</td></tr>");
+			"<tr><td "+selectedClass+"><a onclick='selectWorkflowInstance("+index+")'>"+def.workflowInstanceKey + "</a></td><td "+selectedClass+">"+def.bpmnProcessId + " (" + def.workflowVersion + ")" + "</td></tr>");
 	}
 }	
 
@@ -385,6 +385,8 @@ function renderSelectedWorkflowInstance() {
 		}
 
 		$('#workflowKey').html(selectedWorkflowInstance.workflowKey);
+		$('#bpmnProcessId').html(selectedWorkflowInstance.bpmnProcessId);
+		
 		$('#payload').val(
 			JSON.stringify(
 				JSON.parse(selectedWorkflowInstance.payload), undefined, 2

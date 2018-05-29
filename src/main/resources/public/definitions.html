@@ -47,10 +47,11 @@ em.optional:after {
     </style>
 </head>
 <body>
+
 <header class="cam-brand-header">
     <!-- depending on your layout, you may want to use the `.container-fluid` class instead below -->
     <div class="container-fluid">
-        <a class="navbar-brand" href="./index.html" title="Zeebe Simple Monitor">
+        <a class="navbar-brand" href="./" title="Zeebe Monitor">
         <span class="brand-name" style="top: 0px;">
           <img style="height: 35px;" src="img/logo.png"/> Zeebe Simple Monitor
         </span>
@@ -59,33 +60,19 @@ em.optional:after {
         <!-- this is intended for the site navigation -->
         <nav class="sections-menu">
             <ul>
-                <li><a href="./index.html">Configuration</a></li>
-                <li class="active"><a href="./definitions.html">Workflow Definitions</a></li>
-                <li><a href="./instances.html">Workflow Instances</a></li>
-                <li><a href="./logs.html">Logs</a></li>
-            </ul>
-        </nav>
-
-        <nav class="app-menu">
-            <ul>
-                <li id="brokerGlobalInfo">
-                    <!--<a href=""><span id="defaultBrokerState" class="btn btn-danger">Not connected. Klick to connect default.</span></a>-->
-                </li>
+                <li><a href="./index.html">Broker</a></li>
+                <li class="active"><a href="./definitions.html">Workflows</a></li>
+                <li><a href="./instances.html">Instances</a></li>
+                <li><a href="./logs.html">Records</a></li>
             </ul>
         </nav>
     </div>
+    
 </header>
 
 <div class="page-body container-fluid">
     <section class="page-section">
-        <header>
-            <h1>Workflows</h1>
-
-            <p>
-                Inspect deployed BPMN workflows within connected Zeebe brokers.
-            </p>
-        </header>
-
+       
         <div id="errorPanel" style="display: none;">
             <div class="alert alert-danger" style="margin-top: 25px;" role="alert">
                 <button type="button" class="close" aria-label="Close" onclick="ackError()"><span aria-hidden="true">&times;</span></button>
@@ -94,10 +81,12 @@ em.optional:after {
         </div>
 
         <div class="row">
+            
             <div class="col-md-2">
                 <h2>
-                    List
-                    <a onclick="refresh()" class="btn btn-default"><span class="glyphicon glyphicon-refresh"></span></a>
+              		<a onclick="refresh()" class="btn btn-default"><span class="glyphicon glyphicon-refresh"></span></a>
+       
+                    Workflows
                 </h2>
                 <table id="workflowDefinitionTable" class="table table-striped">
                     <thead>
@@ -109,30 +98,31 @@ em.optional:after {
                         <td class="tngp-table-selected"></td>
                     </tr>
                 </table>
-
-                <h2>Deploy</h2>
-                <div><p>
-                    <input id="documentToUpload" name="Dokument hochladen" type="file" multiple="multiple" accept=".bpmn20.xml, .bpmn, .xml"
-                           style="font-size: x-small;"/>
-                </p></div>
-                <div><p>
-                    <select id="selectedTopicDropdown" size="1">
-                    	<option>default-topic</option>
-                    </select>
-                </p></div>
-                <div><p>
-                    <button class="btn btn-secondary" onclick="uploadModels()">Deploy</button>
-                </p></div>
-
+			
+			    <h2>Deployment</h2>
+                
+                <div class="form-group">
+	                <label>Workflow</label>
+	                <input id="documentToUpload" class="form-control" name="Dokument hochladen" type="file" multiple="multiple" accept=".bpmn20.xml, .bpmn, .xml" />
+                </div>
+                
+                <div class="form-group">
+	                <label>Topic</label>
+	                <select id="selectedTopicDropdown" class="form-control">
+	                </select>
+                </div>
+                
+                <button class="btn btn-secondary" onclick="uploadModels()">Deploy</button>                
             </div>
-            <div class="col-md-8">
+            
+			<div class="col-md-7">
                 <h2>
-                    Selected
-                    <a onclick="refresh()" class="btn btn-default"><span class="glyphicon glyphicon-refresh"></span></a>
+                    Selected Workflow
                 </h2>
                 <div id="diagramCanvas" class="bpmn-io-viewer-height"></div>
             </div>
-            <div class="col-md-2">
+            
+            <div class="col-md-3">
                 <h2>Info</h2>
                 <table class="table table-striped">
                     <tr>
@@ -140,12 +130,12 @@ em.optional:after {
                         <td id="bpmnProcessId"></td>
                     </tr>
                     <tr>
-                        <td>Key</td>
-                        <td id="workflowKey"></td>
-                    </tr>
-                    <tr>
                         <td>Version</td>
                         <td id="workflowVersion"></td>
+                    </tr>
+                    <tr>
+                        <td>Key</td>
+                        <td id="workflowKey"></td>
                     </tr>
                     <tr>
                         <td>Topic</td>
@@ -160,16 +150,22 @@ em.optional:after {
                         <td id="countEnded"></td>
                     </tr>
                 </table>
+			</div>
+			
+			<div class="col-md-3">
+                <h2>Create Instance</h2>
+               
+                <div class="form-group">
+	                <label>Payload (JSON)</label>
+	                <textarea id="payload" class="form-control">{}</textarea>
+	                
+                </div>
 
-                <h2>Start</h2>
-                <div><p>Payload (JSON):
-                    <textarea id="payload" style="font-size: smaller;">{}</textarea>
-                </p></div>
-                <div><p>
-                    <a href="#" onclick="startWorkflowInstance()" class="btn btn-success">Start new instance</a>
-                </p></div>
-
+                 <button onclick="startWorkflowInstance()" class="btn btn-success">Create new instance</button>
             </div>
+            
+            
+            
         </div>
     </section>
 </div>
