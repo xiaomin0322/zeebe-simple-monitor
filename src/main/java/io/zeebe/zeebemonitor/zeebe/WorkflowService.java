@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 import io.zeebe.client.api.commands.Workflow;
 import io.zeebe.client.api.commands.WorkflowResource;
 import io.zeebe.zeebemonitor.entity.WorkflowEntity;
+import io.zeebe.zeebemonitor.repository.PartitionRepository;
 import io.zeebe.zeebemonitor.repository.WorkflowRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
@@ -18,38 +19,48 @@ public class WorkflowService
     private WorkflowRepository workflowRepository;
 
     @Autowired
+    private PartitionRepository partitionRepository;
+
+    @Autowired
     private ZeebeConnectionService connectionService;
 
     @Async
-    public void loadWorkflowByKey(long workflowKey)
+    public void loadWorkflowByKey(String topic, long workflowKey)
     {
-        loadWorkflowsByKey(Collections.singletonList(workflowKey));
+        loadWorkflowsByKey(topic, Collections.singletonList(workflowKey));
     }
 
     @Async
-    public void loadWorkflowsByKey(final List<Long> workflowKeys)
+    public void loadWorkflowsByKey(String topic, final List<Long> workflowKeys)
     {
         workflowKeys.forEach(workflowKey ->
         {
             final WorkflowResource resource = connectionService
                     .getClient()
-                    .topicClient()
+                    .topicClient(topic)
                     .workflowClient()
                     .newResourceRequest()
                     .workflowKey(workflowKey)
                     .send()
                     .join();
 
-            final WorkflowEntity entity = WorkflowEntity.from(resource);
+            final WorkflowEntity entity = WorkflowEntity.from(resource, topic);
             workflowRepository.save(entity);
         });
     }
 
     public void synchronizeWithBroker()
     {
+        final List<String> topics = partitionRepository.getTopicNames();
+
+        topics.forEach(this::synchronizeWithBroker);
+    }
+
+    private void synchronizeWithBroker(String topic)
+    {
         final List<Workflow> workflows = connectionService
             .getClient()
-            .topicClient()
+            .topicClient(topic)
             .workflowClient()
             .newWorkflowRequest()
             .send()
@@ -71,7 +82,7 @@ public class WorkflowService
 
         if (!workflowKeys.isEmpty())
         {
-            loadWorkflowsByKey(workflowKeys);
+            loadWorkflowsByKey(topic, workflowKeys);
         }
     }
 

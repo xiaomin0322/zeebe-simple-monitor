@@ -83,8 +83,9 @@ em.optional:after {
             
         </header>
 
-        <div class="row">
-            <div class="col-md-6">
+		<div class="row">
+		
+			<div class="col-md-4">
             	
              	<h2>Connection</h2>
                         
@@ -98,20 +99,11 @@ em.optional:after {
                     <div id="connection-state"></div>
                 </div>
                  
-            </div>            
-            
-            <div class="col-md-4">
-                <h2>Reset local data</h2>
+            </div>		
+		</div>
 
-				<p>
-                Reset all local data. This is interesting whenever you cleanup the broker and local client data might not match Zeebe data any more. As all
-                state is reconstructed via the Zeebe logs, you don't loose anything.
-				</p>
-	
-                <button class="btn" onclick="cleanupData()">Delete all local data</button>
-            </div>
-            
-            <div class="col-md-6">
+        <div class="row">        
+        	<div class="col-md-6">
                 <h2>
                     Topology                    
                 </h2>
@@ -131,7 +123,45 @@ em.optional:after {
                 </table>
             </div>
             
-       </div>
+            <div class="col-md-4">
+            	
+             	<h2>Create Topic</h2>
+                        
+            	<div class="form-group">
+                    <label>Topic Name</label>
+                    <input type="text" class="form-control" id="topicName" placeholder="my-topic" value="my-topic">
+                </div>
+                
+                <div class="form-group">
+                    <label>Number of Partitions</label>
+                    <input type="text" class="form-control" id="partitionCount" placeholder="1" value="1">
+                </div>
+                
+                <div class="form-group">
+                    <label>ReplicationFactor</label>
+                    <input type="text" class="form-control" id="replicationFactor" placeholder="1" value="1">
+                </div>
+                
+                <button class="btn btn-secondary" onclick="createTopic()">Create</button>
+                 
+            </div>
+            
+          </div>
+            
+            
+         <div class="row">					
+            <div class="col-md-6">
+                <h2>Reset local data</h2>
+
+				<p>
+                Reset all local data. This is interesting whenever you cleanup the broker and local client data might not match Zeebe data any more. As all
+                state is reconstructed via the Zeebe logs, you don't loose anything.
+				</p>
+	
+                <button class="btn btn-danger" onclick="cleanupData()">Delete all local data</button>
+            </div>
+		
+		</div>
        
     </section>
       

@@ -13,34 +13,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.zeebe.zeebemonitor.rest;
+package io.zeebe.zeebemonitor.entity;
 
-import java.util.List;
+import javax.persistence.Entity;
+import javax.persistence.Id;
 
-public class DeploymentDto
+@Entity
+public class PartitionEntity
 {
-    private String topic;
+    @Id
+    private int id;
 
-    private List<FileDto> files;
+    private String topicName;
 
-    public List<FileDto> getFiles()
+    public int getId()
     {
-        return files;
+        return id;
     }
 
-    public void setFiles(List<FileDto> files)
+    public void setId(int id)
     {
-        this.files = files;
+        this.id = id;
     }
 
-    public String getTopic()
+    public String getTopicName()
     {
-        return topic;
+        return topicName;
     }
 
-    public void setTopic(String topic)
+    public void setTopicName(String topicName)
     {
-        this.topic = topic;
+        this.topicName = topicName;
     }
+
+
 
 }

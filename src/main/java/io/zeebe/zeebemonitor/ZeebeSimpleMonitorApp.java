@@ -21,8 +21,7 @@ import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 
 import io.zeebe.zeebemonitor.repository.ConfigurationRepository;
-import io.zeebe.zeebemonitor.zeebe.WorkflowService;
-import io.zeebe.zeebemonitor.zeebe.ZeebeConnectionService;
+import io.zeebe.zeebemonitor.zeebe.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,6 +47,9 @@ public class ZeebeSimpleMonitorApp
     @Autowired
     private WorkflowService workflowService;
 
+    @Autowired
+    private TopicService topicService;
+
     public static void main(String... args)
     {
         SpringApplication.run(ZeebeSimpleMonitorApp.class, args);
@@ -71,6 +73,8 @@ public class ZeebeSimpleMonitorApp
     {
         if (connectionService.isConnected())
         {
+            topicService.synchronizeWithBroker();
+
             workflowService.synchronizeWithBroker();
         }
     }

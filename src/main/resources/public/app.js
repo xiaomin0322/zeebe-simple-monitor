@@ -8,6 +8,7 @@ let topics = [];
 
 var config;
 
+var selectedTopic;
 var workflowDefinitions;
 var selectedWorkflowDefinition;
 
@@ -41,6 +42,7 @@ function refresh() {
 		checkConnection();
 		loadTopology();
 	} else if (currentPage=='definition') {
+		loadTopics();
 		loadWorkflowDefinitions();		
 	} else if (currentPage=="instance") {
 		loadWorkflowInstances();		
@@ -130,6 +132,31 @@ function connectToBroker() {
     });				
 }
 
+function createTopic() {
+	var topicName = $('#topicName').val()
+	var partitionCount = $('#partitionCount').val()
+	var replicationFactor = $('#replicationFactor').val()
+	
+	var command = '{"topicName":"' + topicName + '", "partitionCount":' + partitionCount + ', "replicationFactor":' + replicationFactor + '}';
+	
+	$.ajax({
+        type : 'POST',
+        url: restAccess + 'topics/',
+        data: command,
+        contentType: 'application/json; charset=utf-8',
+        success: function (result) {
+        	setTimeout(function() {
+				refresh();
+			}, 1000);
+        },
+        error: function (xhr, ajaxOptions, thrownError) {
+       	 showErrorResonse(xhr, ajaxOptions, thrownError);
+        },
+        timeout: 20000,
+        crossDomain: true,
+});
+}
+
 function setup() {
 	setupTo( $('#brokerConnection').val() );
 }
@@ -183,6 +210,44 @@ function renderConnectionState(connected) {
 
 //-------- workflow page
 
+function loadTopics() {
+	$.ajax({
+        type : 'GET',
+        url: restAccess + 'topics/',
+        contentType: 'application/json; charset=utf-8',
+        success: function (result) {
+        	topics = result;
+        	renderTopicSelection();
+        },
+        error: function (xhr, ajaxOptions, thrownError) {
+       	 showErrorResonse(xhr, ajaxOptions, thrownError);
+        },
+        timeout: 3000,
+        crossDomain: true,
+	});	
+}
+
+function renderTopicSelection() {
+	
+	$("#selectedTopicDropdown").empty();
+	
+	$("#selectedTopicDropdown").click(function(){ 
+		selectedTopic = $("#selectedTopicDropdown").val();
+	});
+	
+	for (index = 0; index < topics.length; index++) {
+		var topic = topics[index];
+		
+		$('#selectedTopicDropdown').append('<option value="' + topic + '">' + topic + '</option>');
+	}
+	
+	if (selectedTopic) {
+		$("#selectedTopicDropdown").val(selectedTopic);
+	} else {
+		$("#selectedTopicDropdown").val($("#selectedTopicDropdown option:first").val());
+	}
+}	
+
 function loadWorkflowDefinitions() {
 	$.get(restAccess + 'workflows/', function(result) {
 	    workflowDefinitions = result;
@@ -202,7 +267,7 @@ function renderWorkflowDefinitionTable() {
 		if (selectedWorkflowDefinition && def.key==selectedWorkflowDefinition.key && def.version==selectedWorkflowDefinition.version) {
 			selectedClass ='class="tngp-table-selected"';
 		}
-		$('#workflowDefinitionTable tbody').append("<tr><td "+selectedClass+"><a onclick='selectWorkflowDefinition("+index+")'>"+def.bpmnProcessId + "(" + def.version + ")" +"</a></td><td "+selectedClass+">"+def.countRunning+"</td></tr>");
+		$('#workflowDefinitionTable tbody').append("<tr><td "+selectedClass+"><a onclick='selectWorkflowDefinition("+index+")'>"+def.bpmnProcessId + " (" + def.version + ")" +"</a></td><td "+selectedClass+">"+def.countRunning+"</td></tr>");
 	}
 }	
 
@@ -242,9 +307,9 @@ function renderSelectedWorkflowDefinition() {
 }
 
 function startWorkflowInstance() {
-	console.log(selectedWorkflowDefinition);
+	
 	if (selectedWorkflowDefinition) {
-		console.log(JSON.stringify( $('#payload').val() ));
+		
 		$.ajax({
 	             type : 'POST',
 	             url: restAccess + 'workflows/' + selectedWorkflowDefinition.workflowKey,
@@ -412,7 +477,7 @@ function uploadModels() {
 	var fileUpload = $('#documentToUpload').get(0);
 
 	var filesToUpload = {
-		broker: $('#selectedTopicDropdown').val(), 
+		topic: $('#selectedTopicDropdown').val(), 
 		files: []
 	} 
 

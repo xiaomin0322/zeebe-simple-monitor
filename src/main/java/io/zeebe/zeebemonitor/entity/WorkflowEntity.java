@@ -35,18 +35,18 @@ public class WorkflowEntity
     @Column(length = 100000)
     private String resource;
 
-    public static WorkflowEntity from(WorkflowResource workflowResource)
+    public static WorkflowEntity from(WorkflowResource workflowResource, String topic)
     {
-        final WorkflowEntity dto = new WorkflowEntity();
+        final WorkflowEntity entity = new WorkflowEntity();
 
-        dto.setWorkflowKey(workflowResource.getWorkflowKey());
-        dto.setVersion(workflowResource.getVersion());
-        dto.setBpmnProcessId(workflowResource.getBpmnProcessId());
-        dto.setResource(workflowResource.getBpmnXml());
+        entity.setWorkflowKey(workflowResource.getWorkflowKey());
+        entity.setVersion(workflowResource.getVersion());
+        entity.setBpmnProcessId(workflowResource.getBpmnProcessId());
+        entity.setResource(workflowResource.getBpmnXml());
 
-        dto.setTopic("default-topic");
+        entity.setTopic(topic);
 
-        return dto;
+        return entity;
     }
 
     public String getResource()

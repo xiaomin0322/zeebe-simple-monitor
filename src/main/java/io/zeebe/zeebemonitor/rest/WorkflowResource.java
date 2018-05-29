@@ -103,8 +103,10 @@ public class WorkflowResource
     @RequestMapping(path = "/", method = RequestMethod.POST)
     public void uploadModel(@RequestBody DeploymentDto deployment) throws UnsupportedEncodingException
     {
+        final String deploymentTopic = deployment.getTopic();
+
         final WorkflowClient workflowClient = connections.getClient()
-                .topicClient()
+                .topicClient(deploymentTopic)
                 .workflowClient();
 
         final List<Long> workflowKeys = new ArrayList<>();
@@ -126,7 +128,7 @@ public class WorkflowResource
             workflowKeys.addAll(keys);
         }
 
-        workflowService.loadWorkflowsByKey(workflowKeys);
+        workflowService.loadWorkflowsByKey(deploymentTopic, workflowKeys);
     }
 
 }

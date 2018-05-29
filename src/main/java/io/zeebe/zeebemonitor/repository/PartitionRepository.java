@@ -13,34 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package io.zeebe.zeebemonitor.rest;
+package io.zeebe.zeebemonitor.repository;
 
 import java.util.List;
 
-public class DeploymentDto
+import io.zeebe.zeebemonitor.entity.PartitionEntity;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.CrudRepository;
+
+public interface PartitionRepository extends CrudRepository<PartitionEntity, Integer>
 {
-    private String topic;
-
-    private List<FileDto> files;
-
-    public List<FileDto> getFiles()
-    {
-        return files;
-    }
-
-    public void setFiles(List<FileDto> files)
-    {
-        this.files = files;
-    }
-
-    public String getTopic()
-    {
-        return topic;
-    }
-
-    public void setTopic(String topic)
-    {
-        this.topic = topic;
-    }
+    @Query("SELECT DISTINCT topicName FROM PartitionEntity p")
+    List<String> getTopicNames();
 
 }
