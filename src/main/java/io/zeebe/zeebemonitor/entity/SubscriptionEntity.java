@@ -15,45 +15,34 @@
  */
 package io.zeebe.zeebemonitor.entity;
 
-import java.util.UUID;
-
-import javax.persistence.*;
+import javax.persistence.Entity;
+import javax.persistence.Id;
 
 @Entity
-public class ConfigurationEntity
+public class SubscriptionEntity
 {
     @Id
-    @GeneratedValue
-    private String clientId = UUID.randomUUID().toString();
+    private String topicName;
 
-    private String connectionString;
+    private String subscriptionName;
 
-    public ConfigurationEntity()
+    public String getTopicName()
     {
+        return topicName;
     }
 
-    public ConfigurationEntity(String connectionString)
+    public void setTopicName(String topicName)
     {
-        this.connectionString = connectionString;
+        this.topicName = topicName;
     }
 
-    public String getClientId()
+    public String getSubscriptionName()
     {
-        return clientId;
+        return subscriptionName;
     }
 
-    public void setClientId(String clientId)
+    public void setSubscriptionName(String subscriptionName)
     {
-        this.clientId = clientId;
-    }
-
-    public String getConnectionString()
-    {
-        return connectionString;
-    }
-
-    public void setConnectionString(String connectionString)
-    {
-        this.connectionString = connectionString;
+        this.subscriptionName = subscriptionName;
     }
 }

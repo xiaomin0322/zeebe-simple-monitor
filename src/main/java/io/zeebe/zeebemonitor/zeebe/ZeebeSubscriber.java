@@ -45,41 +45,42 @@ public class ZeebeSubscriber
     private RecordRepository loggedEventRepository;
 
     @Autowired
-    private ConfigurationRepository configurationRepository;
+    private SubscriptionRepository subscriptionRepository;
 
     @Autowired
     private ZeebeConnectionService connectionService;
 
-    public void openSubscription(String topic)
+    public void openSubscription(String topicName)
     {
-        configurationRepository.getConfiguration().ifPresent(config ->
+        LOG.debug("open subscription of topic {}", topicName);
+
+        final SubscriptionEntity subscriptionEntity = subscriptionRepository.findOne(topicName);
+        final String subscriptionName = subscriptionEntity != null ? subscriptionEntity.getSubscriptionName() : SUBSCRIPTION_NAME;
+
+        final Handler handler = new Handler();
+
+        final TopicSubscriptionBuilderStep3 subscriptionBuilder = connectionService
+                .getClient()
+                .topicClient(topicName)
+                .newSubscription()
+                .name(subscriptionName)
+                .workflowInstanceEventHandler(handler::onWorkflowInstanceEvent)
+                .incidentEventHandler(handler::onIncidentEvent)
+                .recordHandler(handler::onRecord)
+                .startAtHeadOfTopic();
+
+        if (subscriptionEntity == null)
         {
-            LOG.debug("open subscription of topic {}", topic);
+            subscriptionBuilder.forcedStart();
 
-            final String subscriptionName = config.getSubscriptionName();
-            final Handler handler = new Handler();
+            final SubscriptionEntity newSubscriptionEntity = new SubscriptionEntity();
+            newSubscriptionEntity.setTopicName(topicName);
+            newSubscriptionEntity.setSubscriptionName(subscriptionName);
 
-            final TopicSubscriptionBuilderStep3 subscriptionBuilder = connectionService
-                    .getClient()
-                    .topicClient(topic)
-                    .newSubscription()
-                    .name(SUBSCRIPTION_NAME)
-                    .workflowInstanceEventHandler(handler::onWorkflowInstanceEvent)
-                    .incidentEventHandler(handler::onIncidentEvent)
-                    .recordHandler(handler::onRecord)
-                    .startAtHeadOfTopic();
+            subscriptionRepository.save(newSubscriptionEntity);
+        }
 
-            if (subscriptionName == null)
-            {
-                // FIXME do the check for each topic (for example: have one entity per topic subscription)
-                subscriptionBuilder.forcedStart();
-
-                config.setSubscriptionName(SUBSCRIPTION_NAME);
-                configurationRepository.save(config);
-            }
-
-            subscriptionBuilder.open();
-        });
+        subscriptionBuilder.open();
     }
 
     private class Handler implements WorkflowInstanceEventHandler, IncidentEventHandler, RecordHandler
