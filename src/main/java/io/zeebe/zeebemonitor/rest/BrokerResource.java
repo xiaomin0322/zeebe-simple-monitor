@@ -16,7 +16,6 @@
 package io.zeebe.zeebemonitor.rest;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import io.zeebe.client.api.commands.BrokerInfo;
 import io.zeebe.zeebemonitor.entity.ConfigurationEntity;
@@ -87,7 +86,7 @@ public class BrokerResource
     }
 
     @RequestMapping(path = "/topology")
-    public List<BrokerDto> getTopology()
+    public List<BrokerInfo> getTopology()
     {
         final List<BrokerInfo> brokers = zeebeConnections
             .getClient()
@@ -96,28 +95,7 @@ public class BrokerResource
             .join()
             .getBrokers();
 
-        return brokers.stream().map(b ->
-        {
-            final BrokerDto brokerDto = new BrokerDto();
-
-            brokerDto.setAddress(b.getSocketAddress().toString());
-
-            final List<PartitionDto> partitionDtos = b.getPartitions().stream().map(p ->
-            {
-                final PartitionDto partitionDto = new PartitionDto();
-
-                partitionDto.setTopicName(p.getTopicName());
-                partitionDto.setPartitionId(p.getPartitionId());
-                partitionDto.setRole(p.getRole().name());
-
-                return partitionDto;
-            }).collect(Collectors.toList());
-
-            brokerDto.setPartitions(partitionDtos);
-
-            return brokerDto;
-        })
-        .collect(Collectors.toList());
+        return brokers;
     }
 
 }
