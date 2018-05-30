@@ -6,6 +6,7 @@ import java.util.stream.Collectors;
 
 import io.zeebe.client.api.commands.Partition;
 import io.zeebe.client.api.commands.Topic;
+import io.zeebe.protocol.Protocol;
 import io.zeebe.zeebemonitor.entity.PartitionEntity;
 import io.zeebe.zeebemonitor.repository.PartitionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +21,9 @@ public class TopicService
 
     @Autowired
     private ZeebeConnectionService connectionService;
+
+    @Autowired
+    private ZeebeSubscriber subscriber;
 
     @Async
     public void synchronizeAsync()
@@ -57,6 +61,13 @@ public class TopicService
 
             partitionRepository.save(partitionEntity);
         });
+
+        partitions
+            .stream()
+            .map(Partition::getTopicName)
+            .filter(t -> !Protocol.SYSTEM_TOPIC.equals(t))
+            .distinct()
+            .forEach(newTopic -> subscriber.openSubscription(newTopic));
     }
 
 }

@@ -17,13 +17,14 @@ package io.zeebe.zeebemonitor.repository;
 
 import java.util.List;
 
+import io.zeebe.protocol.Protocol;
 import io.zeebe.zeebemonitor.entity.PartitionEntity;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
 
 public interface PartitionRepository extends CrudRepository<PartitionEntity, Integer>
 {
-    @Query("SELECT DISTINCT topicName FROM PartitionEntity p")
+    @Query("SELECT DISTINCT topicName FROM PartitionEntity p WHERE p.id != " + Protocol.SYSTEM_PARTITION)
     List<String> getTopicNames();
 
 }

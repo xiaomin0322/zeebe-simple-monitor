@@ -15,7 +15,6 @@
  */
 package io.zeebe.zeebemonitor.zeebe;
 
-import io.zeebe.client.ZeebeClient;
 import io.zeebe.client.api.events.IncidentEvent;
 import io.zeebe.client.api.events.WorkflowInstanceEvent;
 import io.zeebe.client.api.record.Record;
@@ -48,16 +47,21 @@ public class ZeebeSubscriber
     @Autowired
     private ConfigurationRepository configurationRepository;
 
-    public void openSubscription(final ZeebeClient client)
+    @Autowired
+    private ZeebeConnectionService connectionService;
+
+    public void openSubscription(String topic)
     {
         configurationRepository.getConfiguration().ifPresent(config ->
         {
-            LOG.debug("open subscription");
+            LOG.debug("open subscription of topic {}", topic);
 
             final String subscriptionName = config.getSubscriptionName();
             final Handler handler = new Handler();
 
-            final TopicSubscriptionBuilderStep3 subscriptionBuilder = client.topicClient()
+            final TopicSubscriptionBuilderStep3 subscriptionBuilder = connectionService
+                    .getClient()
+                    .topicClient(topic)
                     .newSubscription()
                     .name(SUBSCRIPTION_NAME)
                     .workflowInstanceEventHandler(handler::onWorkflowInstanceEvent)
@@ -67,6 +71,7 @@ public class ZeebeSubscriber
 
             if (subscriptionName == null)
             {
+                // FIXME do the check for each topic (for example: have one entity per topic subscription)
                 subscriptionBuilder.forcedStart();
 
                 config.setSubscriptionName(SUBSCRIPTION_NAME);

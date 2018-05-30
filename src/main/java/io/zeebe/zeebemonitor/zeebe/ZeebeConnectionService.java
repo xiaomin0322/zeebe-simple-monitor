@@ -67,7 +67,9 @@ public class ZeebeConnectionService
 
             connected = true;
 
-            subscriber.openSubscription(client);
+            partitionRepository
+                .getTopicNames()
+                .forEach(topic -> subscriber.openSubscription(topic));
         }
         else
         {

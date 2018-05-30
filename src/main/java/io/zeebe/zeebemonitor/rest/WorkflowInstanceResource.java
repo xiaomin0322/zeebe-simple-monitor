@@ -55,7 +55,7 @@ public class WorkflowInstanceResource
 
             connections
                 .getClient()
-                .topicClient()
+                .topicClient(workflowInstance.getTopicName())
                 .workflowClient()
                 .newCancelInstanceCommand(event)
                 .send()
@@ -78,7 +78,7 @@ public class WorkflowInstanceResource
 
             connections
                 .getClient()
-                .topicClient()
+                .topicClient(workflowInstance.getTopicName())
                 .workflowClient()
                 .newUpdatePayloadCommand(event)
                 .payload(payload)

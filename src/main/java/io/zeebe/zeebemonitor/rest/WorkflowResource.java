@@ -89,9 +89,11 @@ public class WorkflowResource
     @RequestMapping(path = "/{workflowKey}", method = RequestMethod.POST)
     public void createWorkflowInstance(@PathVariable("workflowKey") long workflowKey, @RequestBody String payload)
     {
+        final WorkflowEntity workflow = workflowRepository.findOne(workflowKey);
+
         connections
             .getClient()
-            .topicClient()
+            .topicClient(workflow.getTopic())
             .workflowClient()
             .newCreateInstanceCommand()
             .workflowKey(workflowKey)
